@@ -126,10 +126,16 @@ textarea{min-height:88px;resize:vertical}
 .srow .c{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .srow.now{background:var(--accent-soft);border-radius:6px;padding-left:6px;margin-left:-6px}
 
+/* feedback */
+.rate{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rate .chip{text-align:center;padding:9px 6px}
+.fbq{display:flex;flex-direction:column;gap:6px}
+.fbq p{font-weight:600;font-size:14px}
+
 /* tab bar */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-.tabbar .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
-.tab{border:0;background:transparent;padding:8px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--display);letter-spacing:.02em;text-transform:uppercase}
+.tabbar .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tab{border:0;background:transparent;padding:8px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--display);letter-spacing:.02em;text-transform:uppercase}
 .tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tab[aria-current="page"]{color:var(--accent)}
 
@@ -153,12 +159,14 @@ textarea{min-height:88px;resize:vertical}
 <main class="wrap" id="view-liste" hidden><div class="stack" id="liste"></div></main>
 <main class="wrap" id="view-kontakte" hidden><div class="stack" id="kontakte"></div></main>
 <main class="wrap" id="view-plan" hidden><div class="stack" id="plan"></div></main>
+<main class="wrap" id="view-feedback" hidden><div class="stack" id="feedback"></div></main>
 
 <nav class="tabbar" aria-label="Bereiche"><div class="in">
   <button class="tab" data-view="melden" id="tab-melden"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 4l9 6.5V20H3z"/><path d="M9 20v-6h6v6"/></svg>Hallen</button>
   <button class="tab" data-view="liste" id="tab-liste"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Meldungen</button>
   <button class="tab" data-view="kontakte" id="tab-kontakte"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>Kontakte</button>
   <button class="tab" data-view="plan" id="tab-plan"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Belegung</button>
+  <button class="tab" data-view="feedback" id="tab-feedback"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>Feedback</button>
 </div></nav>
 
 <script>
@@ -338,7 +346,7 @@ function renderMode(){
 /* ---------- navigation ---------- */
 function setView(v){
   S.view=v;
-  ['melden','liste','kontakte','plan'].forEach(x=>{ $('view-'+x).hidden=(x!==v); $('tab-'+x).setAttribute('aria-current',x===v?'page':'false'); });
+  ['melden','liste','kontakte','plan','feedback'].forEach(x=>{ $('view-'+x).hidden=(x!==v); $('tab-'+x).setAttribute('aria-current',x===v?'page':'false'); });
   window.scrollTo(0,0); render();
 }
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setView(t.dataset.view)));
@@ -348,6 +356,7 @@ function render(){
   if(S.view==='melden') renderHome();
   else if(S.view==='liste') renderList();
   else if(S.view==='kontakte') renderContacts();
+  else if(S.view==='feedback') renderFeedback();
   else renderPlan();
 }
 
@@ -361,6 +370,7 @@ function renderHome(){
     <p><b>1. Trainingsbeginn:</b> Halle kurz anschauen und „Halle in Ordnung“ tippen. Dauert zehn Sekunden und ersetzt die Unterschrift im Papierbuch.</p>
     <p><b>2. Etwas kaputt oder auffällig?</b> „Mangel melden“, Foto machen, zwei Sätze schreiben. Die App ordnet die Meldung automatisch der laufenden und der vorherigen Belegung zu.</p>
     <p><b>3. Kümmern:</b> Unter „Meldungen“ sehen alle, was offen ist. Hausmeister oder Verein setzen den Status auf „In Bearbeitung“ und „Erledigt“.</p>
+    <p class="note">Deine Rückmeldung zur App kannst du jederzeit unter „Feedback“ abgeben.</p>
     <div class="row"><button class="btn sm" id="hideIntro">Verstanden, ausblenden</button></div></section>`;
   html+=`<div class="row" style="justify-content:space-between"><h2>Hallen</h2><span class="note">${h(now.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'}))}, ${h(now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}))} Uhr</span></div>`;
   HALLS.forEach(hall=>{
@@ -646,10 +656,64 @@ function addSlot(){
   });
 }
 
+/* ---------- feedback ---------- */
+const FBQ=[
+  {id:'bedienung',q:'Ist die Bedienung selbsterklärend?'},
+  {id:'nutzung',q:'Würdest du die App vor dem Training wirklich nutzen?'},
+  {id:'problem',q:'Löst sie das Problem mit dem Papier-Hallenbuch?'}
+];
+const FBOPT=[{v:'ja',l:'Ja'},{v:'teils',l:'Teils'},{v:'nein',l:'Nein'}];
+const LS_FB='hallenbuch.feedback';
+function fbRead(){try{return JSON.parse(localStorage.getItem(LS_FB)||'null')||{answers:{},text:'',sent:[]};}catch(e){return {answers:{},text:'',sent:[]};}}
+function fbWrite(d){try{localStorage.setItem(LS_FB,JSON.stringify(d));}catch(e){}}
+function fbText(d){
+  const who=[S.me.name,S.me.club?clubName(S.me.club):''].filter(Boolean).join(', ')||'anonym';
+  const lines=['Feedback Hallenbuch-Test','Von: '+who,'Datum: '+new Date().toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'}),''];
+  FBQ.forEach(q=>{const a=FBOPT.find(o=>o.v===d.answers[q.id]);lines.push(q.q+' '+(a?a.l:'–'));});
+  lines.push('','Anmerkungen:',d.text.trim()||'–');
+  return lines.join('\n');
+}
+function renderFeedback(){
+  const d=fbRead();
+  let html=`<h2>Feedback zur App</h2><p class="note">Drei kurze Fragen und ein Freifeld. Beim Senden öffnet sich das Teilen-Menü deines Handys, du schickst den Text dann per Mail oder Messenger an die Testleitung.</p>`;
+  html+=`<section class="card stack" style="gap:14px">`;
+  FBQ.forEach(q=>{
+    html+=`<div class="fbq"><p>${h(q.q)}</p><div class="rate" data-q="${q.id}">${FBOPT.map(o=>`<button type="button" class="chip" data-v="${o.v}" aria-pressed="${d.answers[q.id]===o.v}">${o.l}</button>`).join('')}</div></div>`;
+  });
+  html+=`<div class="field"><label for="fb-text">Was fehlt, was stört, was ist gut?</label><textarea id="fb-text" placeholder="Zum Beispiel: Die Fotofunktion habe ich erst beim zweiten Mal gefunden.">${h(d.text)}</textarea></div>
+    <div class="row"><button class="btn primary" id="fb-send">Feedback senden</button><button class="btn" id="fb-copy">Text kopieren</button></div>
+    <p class="note">Dein Name und Verein werden aus deiner letzten Meldung übernommen${S.me.name?` (${h(S.me.name)})`:''}. Ohne Eintrag geht das Feedback anonym raus.</p></section>`;
+  if(d.sent.length) html+=`<p class="note">Zuletzt gesendet: ${h(fmtDT(d.sent[d.sent.length-1]))}. Danke!</p>`;
+  $('feedback').innerHTML=html;
+  $('feedback').querySelectorAll('.rate').forEach(r=>r.addEventListener('click',e=>{
+    const c=e.target.closest('.chip'); if(!c) return;
+    const d2=fbRead(); d2.answers[r.dataset.q]=c.dataset.v; fbWrite(d2);
+    r.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',String(x===c)));
+  }));
+  $('fb-text').addEventListener('input',e=>{const d2=fbRead(); d2.text=e.target.value; fbWrite(d2);});
+  const markSent=()=>{const d2=fbRead(); d2.sent.push(new Date().toISOString()); fbWrite(d2);};
+  $('fb-send').addEventListener('click',async()=>{
+    const d2=fbRead();
+    if(!Object.keys(d2.answers).length&&!d2.text.trim()){ toast('Bitte mindestens eine Frage beantworten.'); return; }
+    const text=fbText(d2);
+    if(navigator.share){
+      try{ await navigator.share({title:'Feedback Hallenbuch',text}); markSent(); toast('Danke für dein Feedback!'); renderFeedback(); return; }
+      catch(e){ if(e&&e.name==='AbortError') return; }
+    }
+    location.href='mailto:?subject='+encodeURIComponent('Feedback Hallenbuch-Test')+'&body='+encodeURIComponent(text);
+    markSent(); setTimeout(renderFeedback,500);
+  });
+  $('fb-copy').addEventListener('click',async()=>{
+    const text=fbText(fbRead());
+    try{ await navigator.clipboard.writeText(text); toast('Kopiert. Jetzt in Mail oder Messenger einfügen.'); }
+    catch(e){ const ta=document.createElement('textarea'); ta.value=text; ta.style.cssText='width:100%;min-height:160px'; $('feedback').appendChild(ta); ta.select(); toast('Text markiert, bitte kopieren.'); }
+  });
+}
+
 /* ---------- boot ---------- */
 (function start(){
   const tok=(location.hash||'').replace('#','');
-  setView(['melden','liste','kontakte','plan'].includes(tok)?tok:'melden');
+  setView(['melden','liste','kontakte','plan','feedback'].includes(tok)?tok:'melden');
   renderMode();
   if(window.claude&&typeof window.claude.use==='function') connect(); else switchToLocal();
   setInterval(()=>{ if(S.view==='melden'&&!$('sheet')) renderHome(); },60000);
