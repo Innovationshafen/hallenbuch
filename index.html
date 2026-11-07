@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Hallenbuch Heinrich-Böll-Schule</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: phone-first single column, max 640px, fixed bottom tab bar, bottom sheets for forms and details. */
+:root{
+  --bg:#F2F4F7; --surface:#FFFFFF; --surface-2:#E9EDF2; --fg:#16202B; --muted:#5C6975; --line:#D3DAE2;
+  --accent:#1B55B5; --accent-fg:#FFFFFF; --accent-soft:#E3ECFA;
+  --ok:#1E7F47; --ok-soft:#DFF3E6; --warn:#B96A00; --warn-soft:#FBEBD3; --crit:#BF2F27; --crit-soft:#FBE1DF;
+  --display:'Barlow Semi Condensed','Arial Narrow',sans-serif; --body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --radius:10px; --shadow:0 1px 2px rgba(20,30,40,.08),0 4px 14px rgba(20,30,40,.06);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E141A; --surface:#172029; --surface-2:#1F2A35; --fg:#E7ECF1; --muted:#98A6B4; --line:#2B3744;
+  --accent:#5C95EE; --accent-fg:#0B1522; --accent-soft:#1B2A42;
+  --ok:#4CBB76; --ok-soft:#163023; --warn:#E8A23C; --warn-soft:#3A2A10; --crit:#EE6B63; --crit-soft:#3C1A18;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E141A; --surface:#172029; --surface-2:#1F2A35; --fg:#E7ECF1; --muted:#98A6B4; --line:#2B3744;
+  --accent:#5C95EE; --accent-fg:#0B1522; --accent-soft:#1B2A42;
+  --ok:#4CBB76; --ok-soft:#163023; --warn:#E8A23C; --warn-soft:#3A2A10; --crit:#EE6B63; --crit-soft:#3C1A18;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3); color-scheme:dark }
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--display);margin:0;line-height:1.15;text-wrap:balance}
+h1{font-size:22px;font-weight:700}
+h2{font-size:19px;font-weight:700}
+h3{font-size:16px;font-weight:600}
+p{margin:0}
+a{color:var(--accent)}
+.sr{position:absolute;left:-9999px}
+
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 96px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .wrap{padding-block:10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;flex-direction:column}
+.brand small{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.mode{font-size:12px;padding:4px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap;font-weight:500}
+.mode.shared{background:var(--ok-soft);color:var(--ok)}
+
+.stack{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.hall{display:grid;grid-template-columns:1fr auto;gap:10px 12px;align-items:start}
+.hall .meta{color:var(--muted);font-size:13px;display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.hall .actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.offen{background:var(--warn-soft);color:var(--warn)}
+.pill.bearbeitung{background:var(--accent-soft);color:var(--accent)}
+.pill.erledigt{background:var(--ok-soft);color:var(--ok)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.neutral{background:var(--surface-2);color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block}
+
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:10px 14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;flex:1 1 auto}
+.btn:focus-visible,.chip:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--crit);border-color:var(--crit)}
+.btn.sm{min-height:34px;padding:6px 10px;font-size:13px;flex:0 0 auto}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.grow{flex:1 1 auto;min-width:0}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:500;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:grid;grid-template-columns:4px 1fr auto;gap:8px 12px;cursor:pointer;text-align:left;width:100%}
+.item .stripe{border-radius:2px;background:var(--line);align-self:stretch}
+.item.offen .stripe{background:var(--warn)}
+.item.bearbeitung .stripe{background:var(--accent)}
+.item.erledigt .stripe{background:var(--ok)}
+.item.check .stripe{background:var(--ok)}
+.item .t{font-weight:600}
+.item .s{color:var(--muted);font-size:13px;margin-top:2px}
+.item .x{color:var(--fg);font-size:14px;margin-top:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.item .right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.item.check{padding:8px 14px;background:transparent}
+.item.check .t{font-weight:500;font-size:14px}
+
+.empty{color:var(--muted);text-align:center;padding:28px 12px;border:1px dashed var(--line);border-radius:var(--radius)}
+.note{font-size:13px;color:var(--muted)}
+.banner{background:var(--warn-soft);color:var(--warn);border-radius:var(--radius);padding:10px 12px;font-size:13.5px;font-weight:500}
+.banner.info{background:var(--accent-soft);color:var(--accent)}
+.label{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* forms */
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:13px;font-weight:600}
+input[type=text],input[type=tel],input[type=email],input[type=time],select,textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 11px;min-height:42px}
+textarea{min-height:88px;resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.grid2{grid-template-columns:1fr}}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ph{position:relative;aspect-ratio:1;max-width:100%;border-radius:8px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line)}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph button{position:absolute;top:4px;right:4px;border:0;background:rgba(0,0,0,.6);color:#fff;border-radius:50%;width:26px;height:26px;cursor:pointer}
+.ph.add{display:flex;align-items:center;justify-content:center;border-style:dashed;cursor:pointer;color:var(--muted);font-size:13px;text-align:center;padding:6px}
+.ph.gone{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;text-align:center;padding:8px}
+.attrib{background:var(--surface-2);border-radius:8px;padding:10px 12px;font-size:13.5px;display:flex;flex-direction:column;gap:4px}
+.attrib b{font-weight:600}
+
+/* detail */
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.kv div:nth-child(odd){color:var(--muted)}
+.bigph{display:grid;gap:8px}
+.bigph img{width:100%;border-radius:8px;display:block;border:1px solid var(--line)}
+.log{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.contact{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.contact:first-child{border-top:0;padding-top:0}
+.contact .n{font-weight:600}
+.contact .d{color:var(--muted);font-size:13px;user-select:all;-webkit-user-select:all}
+
+/* schedule */
+.sched{display:flex;flex-direction:column;gap:4px}
+.srow{display:grid;grid-template-columns:34px 92px 1fr auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums}
+.srow:first-child{border-top:0}
+.srow .c{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow.now{background:var(--accent-soft);border-radius:6px;padding-left:6px;margin-left:-6px}
+
+/* tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabbar .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tab{border:0;background:transparent;padding:8px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--display);letter-spacing:.02em;text-transform:uppercase}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-current="page"]{color:var(--accent)}
+
+/* sheet */
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(10,16,22,.55);display:flex;align-items:flex-end;justify-content:center}
+.sheet .panel{background:var(--bg);width:100%;max-width:640px;max-height:calc(100% - env(safe-area-inset-top,0px) - 24px);border-radius:16px 16px 0 0;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.sheet .head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+.sheet .body{overflow:auto;padding:14px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.close{border:0;background:var(--surface-2);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:18px;line-height:1}
+
+.toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:500;z-index:30;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:no-preference){.toast{animation:pop .18s ease-out}@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}}
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="brand"><small>Heinrich-Böll-Schule</small><h1>Hallenbuch</h1></div>
+  <span class="mode" id="modeBadge">Verbinde…</span>
+</div></header>
+
+<main class="wrap" id="view-melden"><div class="stack" id="home"></div></main>
+<main class="wrap" id="view-liste" hidden><div class="stack" id="liste"></div></main>
+<main class="wrap" id="view-kontakte" hidden><div class="stack" id="kontakte"></div></main>
+<main class="wrap" id="view-plan" hidden><div class="stack" id="plan"></div></main>
+
+<nav class="tabbar" aria-label="Bereiche"><div class="in">
+  <button class="tab" data-view="melden" id="tab-melden"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 4l9 6.5V20H3z"/><path d="M9 20v-6h6v6"/></svg>Hallen</button>
+  <button class="tab" data-view="liste" id="tab-liste"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Meldungen</button>
+  <button class="tab" data-view="kontakte" id="tab-kontakte"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>Kontakte</button>
+  <button class="tab" data-view="plan" id="tab-plan"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Belegung</button>
+</div></nav>
+
+<script>
+/* ---------- fixed master data ---------- */
+const HALLS=[
+  {id:'alt',name:'Alte Halle'},
+  {id:'drei',name:'Neue Dreifeldhalle'},
+  {id:'tt',name:'Tischtennishalle'}
+];
+const CATS=[
+  {id:'schaden',label:'Schaden'},
+  {id:'schmutz',label:'Verschmutzung'},
+  {id:'material',label:'Fehlendes Material'},
+  {id:'sonst',label:'Sonstiges'}
+];
+const STATUS={offen:'Offen',bearbeitung:'In Bearbeitung',erledigt:'Erledigt'};
+const WD=['So','Mo','Di','Mi','Do','Fr','Sa'];
+const PHOTO_DAYS=21;
+const LS_KEY='hallenbuch.v1';
+const LS_ME='hallenbuch.me';
+
+/* Fiktive Testdaten: Vereine, Personen und Nummern sind erfunden. */
+function exampleConfig(){
+  const clubs=[
+    {id:'c1',name:'TV Musterstadt 1900',contact:'Petra Beispiel',phone:'0171 0000001',email:'hallen@tv-musterstadt.example'},
+    {id:'c2',name:'SG Probebach Handball',contact:'Jonas Muster',phone:'0171 0000002',email:'abteilung@sg-probebach.example'},
+    {id:'c3',name:'TTC Testheim',contact:'Lena Platzhalter',phone:'0171 0000003',email:'vorstand@ttc-testheim.example'},
+    {id:'c4',name:'Volleyballclub Fiktivia',contact:'Ali Demo',phone:'0171 0000004',email:'info@vc-fiktivia.example'}
+  ];
+  const schedule=[];
+  const weekday=[['17:00','18:30'],['18:30','20:00'],['20:00','22:00']];               /* vormittags Schulsport */
+  const afternoon=[['14:00','15:30'],['15:30','17:00']];                              /* je nach Halle und Tag schon ab 14 Uhr */
+  const weekend=[['08:00','11:00'],['11:00','14:00'],['14:00','17:00'],['17:00','20:00'],['20:00','22:00']];
+  const big=['c1','c2','c4'];
+  HALLS.forEach((h,hi)=>{
+    for(let wd=0;wd<=6;wd++){
+      const isWeekend=(wd===0||wd===6);
+      const rows=isWeekend?weekend:((hi+wd)%2===0?afternoon.concat(weekday):weekday);
+      rows.forEach((t,ti)=>{
+        const club=h.id==='tt'?((wd+ti)%3===0?'c1':'c3'):big[(hi+wd+ti)%3];
+        schedule.push({hall:h.id,wd,from:t[0],to:t[1],club});
+      });
+    }
+  });
+  return {example:true,clubs,schedule,school:{
+    hausmeister:{name:'Hausmeister Hr. Beispiel',phone:'06000 123456',email:'hausmeister@hbs.example'},
+    sekretariat:{name:'Sekretariat HBS',phone:'06000 123400',email:'sekretariat@hbs.example'}
+  }};
+}
+
+/* ---------- state ---------- */
+const S={
+  view:'melden', mode:'connecting', db:null, assets:null, uid:null,
+  reports:[], config:null, configFromStore:false, loading:true,
+  me:{club:'',name:''}, filterHall:'all', filterStatus:'offen', showChecks:false,
+  unsub:[]
+};
+try{ const m=JSON.parse(localStorage.getItem(LS_ME)||'null'); if(m) S.me=m; }catch(e){}
+
+/* ---------- helpers ---------- */
+const $=(id)=>document.getElementById(id);
+function h(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function uid(){return 'r_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);}
+function hallName(id){const x=HALLS.find(h=>h.id===id);return x?x.name:id;}
+function clubName(id){const c=cfg().clubs.find(c=>c.id===id);return c?c.name:(id||'–');}
+function club(id){return cfg().clubs.find(c=>c.id===id)||null;}
+function catLabel(id){const c=CATS.find(c=>c.id===id);return c?c.label:'';}
+function cfg(){return S.config||(S._ex||(S._ex=exampleConfig()));}
+function fmtDT(iso){const d=new Date(iso);return d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});}
+function fmtT(iso){return new Date(iso).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});}
+function fmtD(iso){return new Date(iso).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'});}
+function daysSince(iso){return (Date.now()-new Date(iso).getTime())/86400000;}
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600);}
+function saveMe(){try{localStorage.setItem(LS_ME,JSON.stringify(S.me));}catch(e){}}
+
+/* ---------- slot attribution ---------- */
+function hm(t){const [a,b]=t.split(':').map(Number);return a*60+b;}
+function slotsAt(hallId,date){
+  const wd=date.getDay(), t=date.getHours()*60+date.getMinutes();
+  const rows=cfg().schedule.filter(r=>r.hall===hallId&&Number(r.wd)===wd).sort((a,b)=>hm(a.from)-hm(b.from));
+  const current=rows.find(r=>hm(r.from)<=t&&t<hm(r.to))||null;
+  const before=rows.filter(r=>hm(r.to)<=t);
+  const previous=before.length?before[before.length-1]:null;
+  const next=rows.find(r=>hm(r.from)>t)||null;
+  return {current,previous,next,rows};
+}
+function notifyList(hallId,date){
+  const {current,previous}=slotsAt(hallId,date);
+  const out=[{kind:'Hausmeister',name:cfg().school.hausmeister.name||'Hausmeister',who:'school:hausmeister'}];
+  if(current) out.push({kind:'Laufende Belegung',name:clubName(current.club),who:current.club});
+  if(previous&&(!current||previous.club!==current.club)) out.push({kind:'Vorherige Belegung',name:clubName(previous.club),who:previous.club});
+  return out;
+}
+
+/* ---------- storage adapter ---------- */
+const local={
+  read(){try{return JSON.parse(localStorage.getItem(LS_KEY)||'null')||{reports:{},config:null};}catch(e){return {reports:{},config:null};}},
+  write(d){try{localStorage.setItem(LS_KEY,JSON.stringify(d));}catch(e){toast('Speichern auf diesem Gerät nicht möglich.');}}
+};
+const store={
+  async addReport(r){
+    if(S.mode==='shared'){
+      try{ await S.db.collection('reports').doc(r.id).set(r); return true; }
+      catch(e){ if(e&&e.code==='invalid_argument'){ switchToLocal('Keine Schreibrechte, Einträge bleiben auf diesem Gerät.'); } else { toast('Speichern fehlgeschlagen: '+(e&&e.message||'')); return false; } }
+    }
+    const d=local.read(); d.reports[r.id]=r; local.write(d); loadLocal(); return true;
+  },
+  async updateReport(id,patch){
+    if(S.mode==='shared'){
+      try{ await S.db.doc('reports/'+id).update(patch); return true; }
+      catch(e){ toast('Änderung fehlgeschlagen: '+(e&&e.message||'')); return false; }
+    }
+    const d=local.read(); if(d.reports[id]) Object.assign(d.reports[id],patch); local.write(d); loadLocal(); return true;
+  },
+  async saveConfig(c){
+    c=JSON.parse(JSON.stringify(c)); delete c.example;
+    if(S.mode==='shared'){
+      try{ await S.db.doc('config/main').set(c); return true; }
+      catch(e){ toast('Speichern fehlgeschlagen: '+(e&&e.message||'')); return false; }
+    }
+    const d=local.read(); d.config=c; local.write(d); loadLocal(); return true;
+  },
+  async uploadPhoto(blob){
+    if(S.mode==='shared'&&S.assets){
+      const r=await S.assets.upload(blob,{type:'image/jpeg'}); return {asset:r.id};
+    }
+    const dataUrl=await new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.readAsDataURL(blob);});
+    return {data:dataUrl};
+  },
+  photoUrl(p){ if(!p) return null; if(p.asset) return '/_blob/'+p.asset; if(p.data) return p.data; return null; }
+};
+function loadLocal(){
+  const d=local.read();
+  S.reports=Object.values(d.reports).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  S.config=d.config; S.loading=false; render();
+}
+/* Fiktive Beispielmeldung für den Test ohne Konto: einmal pro Gerät angelegt. */
+function seedLocal(){
+  const d=local.read(); if(d.seeded) return; d.seeded=true;
+  const y=new Date(); y.setDate(y.getDate()-1);
+  const at=(hh,mm)=>{const t=new Date(y); t.setHours(hh,mm,0,0); return t.toISOString();};
+  d.reports['beispiel_schaden']={id:'beispiel_schaden',kind:'meldung',hall:'drei',createdAt:at(18,35),club:'c2',name:'Jonas Muster',by:null,category:'schaden',
+    text:'Beispielmeldung (fiktiv): Prallschutzmatte an der Südwand eingerissen, ca. 30 cm. Beim Betreten der Halle bereits so vorgefunden.',
+    photos:[],status:'offen',slot:{current:'c2',previous:'c1'},notify:['school:hausmeister','c2','c1'],log:[{at:at(18,35),status:'offen',name:'Jonas Muster'}]};
+  d.reports['beispiel_check']={id:'beispiel_check',kind:'check',hall:'drei',createdAt:at(20,2),club:'c4',name:'Ali Demo',by:null,slot:{current:'c4',previous:'c2'}};
+  local.write(d);
+}
+function switchToLocal(msg){
+  S.unsub.forEach(u=>{try{u();}catch(e){}}); S.unsub=[];
+  S.mode='local'; if(msg) toast(msg); seedLocal(); loadLocal(); renderMode();
+}
+
+async function connect(){
+  let db=null,user=null,assets=null;
+  try{ [db,user,assets]=await Promise.all([claude.use('db'),claude.use('user'),claude.use('assets')]); }catch(e){}
+  if(!db){ switchToLocal(); return; }
+  S.db=db; S.assets=assets;
+  if(user){ try{ S.uid=await user.id(); const w=await user.can('data.write'); if(w===false){ switchToLocal('Nur Lesen: deine Einträge bleiben auf diesem Gerät.'); return; } }catch(e){} }
+  S.mode='shared'; renderMode();
+  const timer=setTimeout(()=>{ if(S.loading){ S.loading=false; toast('Gemeinsame Daten noch nicht erreichbar.'); render(); } },10000);
+  S.unsub.push(db.doc('config/main').onSnapshot(snap=>{
+    S.config=snap.exists?snap.data():null; S.configFromStore=snap.exists; render();
+  },err=>{ console.warn('config',err); }));
+  S.unsub.push(db.collection('reports').orderBy('createdAt','desc').limit(300).onSnapshot(snap=>{
+    S.reports=snap.docs.map(d=>d.data());
+    if(!snap.metadata.fromCache){ clearTimeout(timer); S.loading=false; }
+    render();
+  },err=>{ clearTimeout(timer); console.warn('reports',err); if(err&&err.code!=='unavailable'){ switchToLocal('Gemeinsamer Speicher nicht verfügbar, Demo auf diesem Gerät.'); } }));
+}
+function renderMode(){
+  const b=$('modeBadge');
+  if(S.mode==='shared'){ b.textContent='Gemeinsam'; b.className='mode shared'; b.title='Einträge sind für alle sichtbar'; }
+  else if(S.mode==='local'){ b.textContent='Testversion'; b.className='mode'; b.title='Einträge bleiben nur in diesem Browser'; }
+  else { b.textContent='Verbinde…'; b.className='mode'; }
+}
+
+/* ---------- navigation ---------- */
+function setView(v){
+  S.view=v;
+  ['melden','liste','kontakte','plan'].forEach(x=>{ $('view-'+x).hidden=(x!==v); $('tab-'+x).setAttribute('aria-current',x===v?'page':'false'); });
+  window.scrollTo(0,0); render();
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setView(t.dataset.view)));
+
+/* ---------- rendering ---------- */
+function render(){
+  if(S.view==='melden') renderHome();
+  else if(S.view==='liste') renderList();
+  else if(S.view==='kontakte') renderContacts();
+  else renderPlan();
+}
+
+function renderHome(){
+  const now=new Date();
+  let html='';
+  if(S.mode==='local') html+=`<div class="banner">Testversion: Deine Einträge bleiben nur auf diesem Gerät. Spiel den Ablauf einfach einmal komplett durch.</div>`;
+  if(cfg().example) html+=`<div class="banner info">Testphase: Vereine, Ansprechpartner und Belegungsplan sind fiktiv.</div>`;
+  let intro=false; try{ intro=localStorage.getItem('hallenbuch.intro')!=='1'; }catch(e){ intro=true; }
+  if(intro) html+=`<section class="card stack" style="gap:8px"><h3>So funktioniert das Hallenbuch</h3>
+    <p><b>1. Trainingsbeginn:</b> Halle kurz anschauen und „Halle in Ordnung“ tippen. Dauert zehn Sekunden und ersetzt die Unterschrift im Papierbuch.</p>
+    <p><b>2. Etwas kaputt oder auffällig?</b> „Mangel melden“, Foto machen, zwei Sätze schreiben. Die App ordnet die Meldung automatisch der laufenden und der vorherigen Belegung zu.</p>
+    <p><b>3. Kümmern:</b> Unter „Meldungen“ sehen alle, was offen ist. Hausmeister oder Verein setzen den Status auf „In Bearbeitung“ und „Erledigt“.</p>
+    <div class="row"><button class="btn sm" id="hideIntro">Verstanden, ausblenden</button></div></section>`;
+  html+=`<div class="row" style="justify-content:space-between"><h2>Hallen</h2><span class="note">${h(now.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'}))}, ${h(now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}))} Uhr</span></div>`;
+  HALLS.forEach(hall=>{
+    const open=S.reports.filter(r=>r.hall===hall.id&&r.kind==='meldung'&&r.status!=='erledigt');
+    const lastCheck=S.reports.find(r=>r.hall===hall.id&&r.kind==='check');
+    const {current,previous,next}=slotsAt(hall.id,now);
+    html+=`<section class="card hall">
+      <div><h3>${h(hall.name)}</h3>
+        <div class="meta">
+          <span>${current?`Jetzt: <b>${h(clubName(current.club))}</b> (${h(current.from)}–${h(current.to)})`:(next?`Nächste Belegung ${h(next.from)} Uhr: ${h(clubName(next.club))}`:'Keine Vereinsbelegung mehr heute')}</span>
+          ${previous?`<span>Davor: ${h(clubName(previous.club))} (bis ${h(previous.to)})</span>`:''}
+          <span>${lastCheck?`Letzter Check: ${h(fmtDT(lastCheck.createdAt))}, ${h(clubName(lastCheck.club))}`:'Noch kein Übergabe-Check'}</span>
+        </div></div>
+      <div>${open.length?`<span class="pill offen"><span class="dot"></span>${open.length} offen</span>`:`<span class="pill ok">Nichts offen</span>`}</div>
+      <div class="actions">
+        <button class="btn ok" data-check="${hall.id}">Halle in Ordnung</button>
+        <button class="btn primary" data-report="${hall.id}">Mangel melden</button>
+      </div></section>`;
+  });
+  html+=`<p class="note">Beim Trainingsbeginn kurz bestätigen: „Halle in Ordnung“ oder einen Mangel melden. Ein Mangel beim Start wird der vorherigen Belegung zugeordnet.</p>`;
+  $('home').innerHTML=html;
+  const hi=$('hideIntro'); if(hi) hi.addEventListener('click',()=>{ try{localStorage.setItem('hallenbuch.intro','1');}catch(e){} renderHome(); });
+  $('home').querySelectorAll('[data-check]').forEach(b=>b.addEventListener('click',()=>openCheck(b.dataset.check)));
+  $('home').querySelectorAll('[data-report]').forEach(b=>b.addEventListener('click',()=>openReportForm(b.dataset.report)));
+}
+
+function renderList(){
+  let items=S.reports.filter(r=>S.filterHall==='all'||r.hall===S.filterHall);
+  const checks=items.filter(r=>r.kind==='check');
+  items=items.filter(r=>r.kind==='meldung');
+  if(S.filterStatus==='offen') items=items.filter(r=>r.status!=='erledigt');
+  let html=`<h2>Meldungen</h2>
+  <div class="chips" id="fh">${[{id:'all',name:'Alle Hallen'},...HALLS].map(x=>`<button class="chip" data-h="${x.id}" aria-pressed="${S.filterHall===x.id}">${h(x.name)}</button>`).join('')}</div>
+  <div class="chips" id="fs"><button class="chip" data-s="offen" aria-pressed="${S.filterStatus==='offen'}">Nur offene</button><button class="chip" data-s="alle" aria-pressed="${S.filterStatus==='alle'}">Alle</button><button class="chip" data-s="checks" aria-pressed="${S.showChecks}">Übergabe-Checks (${checks.length})</button></div>`;
+  if(S.loading) html+=`<p class="note">Lade gemeinsame Daten…</p>`;
+  let rows=items.map(r=>({t:r.createdAt,r}));
+  if(S.showChecks) rows=rows.concat(checks.map(r=>({t:r.createdAt,r})));
+  rows.sort((a,b)=>b.t.localeCompare(a.t));
+  if(!rows.length) html+=`<div class="empty">${S.loading?'Noch keine Daten.':'Keine Meldungen in dieser Auswahl.'}<br><span class="note">Neue Meldung über „Hallen“ → „Mangel melden“.</span></div>`;
+  html+=`<div class="list">`+rows.map(({r})=>{
+    if(r.kind==='check') return `<button class="item check" data-id="${h(r.id)}"><span class="stripe"></span><span><span class="t">Halle in Ordnung · ${h(hallName(r.hall))}</span><span class="s"> ${h(clubName(r.club))}, ${h(r.name)}</span></span><span class="right"><span>${h(fmtD(r.createdAt))}</span><span>${h(fmtT(r.createdAt))}</span></span></button>`;
+    return `<button class="item ${h(r.status)}" data-id="${h(r.id)}"><span class="stripe"></span>
+      <span style="min-width:0"><span class="t">${h(catLabel(r.category))} · ${h(hallName(r.hall))}</span>
+      <span class="s" style="display:block">${h(clubName(r.club))}, ${h(r.name)}${r.photos&&r.photos.length?` · ${r.photos.length} Foto${r.photos.length>1?'s':''}`:''}</span>
+      <span class="x">${h(r.text)}</span></span>
+      <span class="right"><span class="pill ${h(r.status)}">${h(STATUS[r.status]||r.status)}</span><span>${h(fmtD(r.createdAt))}</span><span>${h(fmtT(r.createdAt))}</span></span></button>`;
+  }).join('')+`</div>`;
+  $('liste').innerHTML=html;
+  $('fh').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{S.filterHall=c.dataset.h;renderList();}));
+  $('fs').querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{ if(c.dataset.s==='checks') S.showChecks=!S.showChecks; else S.filterStatus=c.dataset.s; renderList();}));
+  $('liste').querySelectorAll('.item').forEach(i=>i.addEventListener('click',()=>openDetail(i.dataset.id)));
+}
+
+function renderContacts(){
+  const c=cfg();
+  let html=`<div class="row" style="justify-content:space-between"><h2>Kontakte</h2><button class="btn sm" id="addClub">+ Verein</button></div>`;
+  if(c.example) html+=`<div class="banner info">Fiktive Testdaten. Tippe auf einen Eintrag, um ihn zu ändern.</div>`;
+  html+=`<section class="card"><p class="label" style="margin-bottom:8px">Schule</p>`;
+  ['hausmeister','sekretariat'].forEach(k=>{
+    const s=c.school[k];
+    html+=`<div class="contact" data-school="${k}" role="button" tabindex="0"><div><div class="n">${h(s.name||(k==='hausmeister'?'Hausmeister':'Sekretariat'))}</div><div class="d">${h(s.phone||'Telefon fehlt')}${s.email?' · '+h(s.email):''}</div></div><span class="note">Ändern</span></div>`;
+  });
+  html+=`</section><section class="card"><p class="label" style="margin-bottom:8px">Vereine und Ansprechpartner</p>`;
+  if(!c.clubs.length) html+=`<p class="note">Noch kein Verein angelegt.</p>`;
+  c.clubs.forEach(cl=>{
+    html+=`<div class="contact" data-club="${h(cl.id)}" role="button" tabindex="0"><div><div class="n">${h(cl.name)}</div><div class="d">${h(cl.contact||'Ansprechpartner fehlt')}${cl.phone?' · '+h(cl.phone):''}${cl.email?' · '+h(cl.email):''}</div></div><span class="note">Ändern</span></div>`;
+  });
+  html+=`</section>`;
+  $('kontakte').innerHTML=html;
+  $('addClub').addEventListener('click',()=>editClub(null));
+  $('kontakte').querySelectorAll('[data-club]').forEach(e=>{const f=()=>editClub(e.dataset.club);e.addEventListener('click',f);e.addEventListener('keydown',ev=>{if(ev.key==='Enter')f();});});
+  $('kontakte').querySelectorAll('[data-school]').forEach(e=>{const f=()=>editSchool(e.dataset.school);e.addEventListener('click',f);e.addEventListener('keydown',ev=>{if(ev.key==='Enter')f();});});
+}
+
+function renderPlan(){
+  const c=cfg(), now=new Date();
+  let html=`<div class="row" style="justify-content:space-between"><h2>Belegungsplan</h2><button class="btn sm" id="addSlot">+ Zeit</button></div>`;
+  if(c.example) html+=`<div class="banner info">Fiktiver Testplan. Vormittags Schulsport, Vereine je nach Tag ab 14 oder 17 Uhr, am Wochenende ganztägig.</div>`;
+  html+=`<p class="note">Der Plan ordnet jede Meldung der laufenden und der vorherigen Belegung zu und bestimmt, wer informiert wird.</p>`;
+  HALLS.forEach(hall=>{
+    html+=`<section class="card"><h3 style="margin-bottom:8px">${h(hall.name)}</h3>`;
+    const rows=c.schedule.filter(r=>r.hall===hall.id).sort((a,b)=>(Number(a.wd)||7)-(Number(b.wd)||7)||hm(a.from)-hm(b.from));
+    if(!rows.length) html+=`<p class="note">Keine Belegung eingetragen.</p>`;
+    html+=`<div class="sched">`+rows.map(r=>{
+      const isNow=Number(r.wd)===now.getDay()&&hm(r.from)<=now.getHours()*60+now.getMinutes()&&now.getHours()*60+now.getMinutes()<hm(r.to);
+      const idx=c.schedule.indexOf(r);
+      return `<div class="srow${isNow?' now':''}"><span>${h(WD[Number(r.wd)]||'?')}</span><span>${h(r.from)}–${h(r.to)}</span><span class="c">${h(clubName(r.club))}</span><button class="btn sm ghost" data-del="${idx}" aria-label="Zeit löschen">✕</button></div>`;
+    }).join('')+`</div></section>`;
+  });
+  $('plan').innerHTML=html;
+  $('addSlot').addEventListener('click',addSlot);
+  $('plan').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async()=>{
+    const c2=JSON.parse(JSON.stringify(cfg())); c2.schedule.splice(Number(b.dataset.del),1);
+    if(await store.saveConfig(c2)) toast('Zeit entfernt');
+  }));
+}
+
+/* ---------- sheets ---------- */
+function openSheet(title,bodyEl){
+  closeSheet();
+  const s=document.createElement('div'); s.className='sheet'; s.id='sheet';
+  s.innerHTML=`<div class="panel" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><div class="head"><h2 id="sheetTitle">${h(title)}</h2><button class="close" aria-label="Schließen">×</button></div><div class="body"></div></div>`;
+  s.querySelector('.body').appendChild(bodyEl);
+  s.querySelector('.close').addEventListener('click',closeSheet);
+  s.addEventListener('click',e=>{ if(e.target===s) closeSheet(); });
+  document.body.appendChild(s); document.body.style.overflow='hidden';
+  return s;
+}
+function closeSheet(){ const s=$('sheet'); if(s) s.remove(); document.body.style.overflow=''; }
+function el(html){ const d=document.createElement('div'); d.className='stack'; d.innerHTML=html; return d; }
+function clubOptions(sel){ return cfg().clubs.map(c=>`<option value="${h(c.id)}"${c.id===sel?' selected':''}>${h(c.name)}</option>`).join(''); }
+function whoFields(){
+  return `<div class="grid2"><div class="field"><label for="f-club">Verein</label><select id="f-club"><option value="">Bitte wählen</option>${clubOptions(S.me.club)}</select></div>
+  <div class="field"><label for="f-name">Dein Name</label><input type="text" id="f-name" value="${h(S.me.name)}" placeholder="Vor- und Nachname" autocomplete="name"></div></div>`;
+}
+function readWho(root){
+  const club=root.querySelector('#f-club').value, name=root.querySelector('#f-name').value.trim();
+  if(!club){ toast('Bitte Verein wählen.'); return null; }
+  if(!name){ toast('Bitte Namen eintragen.'); return null; }
+  S.me={club,name}; saveMe(); return {club,name};
+}
+
+function openCheck(hallId){
+  const now=new Date(), {current,previous}=slotsAt(hallId,now);
+  const body=el(`<p>Du bestätigst, dass die <b>${h(hallName(hallId))}</b> bei Übernahme in Ordnung ist.</p>${whoFields()}
+    <div class="attrib"><span>Zeitpunkt: <b>${h(fmtDT(now.toISOString()))}</b></span><span>Laufende Belegung: <b>${h(current?clubName(current.club):'keine laut Plan')}</b></span><span>Vorherige Belegung: <b>${h(previous?clubName(previous.club):'keine laut Plan')}</b></span></div>
+    <div class="row"><button class="btn ok" id="go">Halle in Ordnung</button><button class="btn" id="alt">Doch ein Mangel</button></div>`);
+  openSheet('Übergabe-Check',body);
+  body.querySelector('#go').addEventListener('click',async()=>{
+    const who=readWho(body); if(!who) return;
+    const r={id:uid(),kind:'check',hall:hallId,createdAt:now.toISOString(),club:who.club,name:who.name,by:S.uid||null,
+      slot:{current:current?current.club:null,previous:previous?previous.club:null}};
+    if(await store.addReport(r)){ closeSheet(); toast('Check gespeichert. Gutes Training!'); }
+  });
+  body.querySelector('#alt').addEventListener('click',()=>openReportForm(hallId));
+}
+
+function openReportForm(hallId){
+  const now=new Date(), photos=[];
+  const body=el(`
+    <div class="field"><label for="f-hall">Halle</label><select id="f-hall">${HALLS.map(x=>`<option value="${x.id}"${x.id===hallId?' selected':''}>${h(x.name)}</option>`).join('')}</select></div>
+    ${whoFields()}
+    <div class="field"><span class="label">Art</span><div class="chips" id="f-cat">${CATS.map((c,i)=>`<button type="button" class="chip" data-cat="${c.id}" aria-pressed="${i===0}">${h(c.label)}</button>`).join('')}</div></div>
+    <div class="field"><label for="f-text">Was ist aufgefallen?</label><textarea id="f-text" placeholder="Wo genau, was, seit wann? Zum Beispiel: Prallschutz an der Südwand gerissen, ca. 30 cm."></textarea></div>
+    <div class="field"><span class="label">Fotos (max. 3, werden nach ${PHOTO_DAYS} Tagen gelöscht)</span><div class="photos" id="f-photos"></div><input type="file" id="f-file" accept="image/*" capture="environment" class="sr"></div>
+    <div class="attrib" id="f-attrib"></div>
+    <div class="row"><button class="btn primary" id="send">Meldung senden</button></div>`);
+  openSheet('Mangel melden',body);
+  const attrib=()=>{
+    const hid=body.querySelector('#f-hall').value, {current,previous}=slotsAt(hid,now);
+    body.querySelector('#f-attrib').innerHTML=`<span class="label">Zuordnung</span><span>Zeitpunkt: <b>${h(fmtDT(now.toISOString()))}</b></span><span>Laufende Belegung: <b>${h(current?clubName(current.club)+' ('+current.from+'–'+current.to+')':'keine laut Plan')}</b></span><span>Vorherige Belegung: <b>${h(previous?clubName(previous.club)+' (bis '+previous.to+')':'keine laut Plan')}</b></span><span>Wird informiert: <b>${h(notifyList(hid,now).map(n=>n.name).join(', '))}</b></span>`;
+  };
+  attrib(); body.querySelector('#f-hall').addEventListener('change',attrib);
+  body.querySelector('#f-cat').addEventListener('click',e=>{const c=e.target.closest('.chip'); if(!c) return; body.querySelectorAll('#f-cat .chip').forEach(x=>x.setAttribute('aria-pressed','false')); c.setAttribute('aria-pressed','true');});
+  const file=body.querySelector('#f-file');
+  const drawPhotos=()=>{
+    const box=body.querySelector('#f-photos');
+    box.innerHTML=photos.map((p,i)=>`<div class="ph"><img src="${p.preview}" alt="Foto ${i+1}"><button type="button" data-rm="${i}" aria-label="Foto entfernen">×</button></div>`).join('')+(photos.length<3?`<button type="button" class="ph add" id="addPh">+ Foto aufnehmen</button>`:'');
+    box.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{photos.splice(Number(b.dataset.rm),1);drawPhotos();}));
+    const a=box.querySelector('#addPh'); if(a) a.addEventListener('click',()=>file.click());
+  };
+  drawPhotos();
+  file.addEventListener('change',async()=>{
+    const f=file.files&&file.files[0]; file.value=''; if(!f) return;
+    try{ const blob=await shrink(f); photos.push({blob,preview:URL.createObjectURL(blob)}); drawPhotos(); }
+    catch(e){ toast('Foto konnte nicht verarbeitet werden.'); }
+  });
+  body.querySelector('#send').addEventListener('click',async()=>{
+    const who=readWho(body); if(!who) return;
+    const text=body.querySelector('#f-text').value.trim();
+    if(!text){ toast('Bitte kurz beschreiben, was aufgefallen ist.'); return; }
+    const btn=body.querySelector('#send'); btn.disabled=true; btn.textContent='Wird gespeichert…';
+    const hid=body.querySelector('#f-hall').value, {current,previous}=slotsAt(hid,now);
+    const stored=[];
+    try{ for(const p of photos){ stored.push(await store.uploadPhoto(p.blob)); } }
+    catch(e){ toast('Foto-Upload fehlgeschlagen: '+(e&&e.message||'')); btn.disabled=false; btn.textContent='Meldung senden'; return; }
+    const r={id:uid(),kind:'meldung',hall:hid,createdAt:now.toISOString(),club:who.club,name:who.name,by:S.uid||null,
+      category:body.querySelector('#f-cat [aria-pressed="true"]').dataset.cat,text,photos:stored,status:'offen',
+      slot:{current:current?current.club:null,previous:previous?previous.club:null},
+      notify:notifyList(hid,now).map(n=>n.who),
+      log:[{at:now.toISOString(),status:'offen',name:who.name}]};
+    if(await store.addReport(r)){ closeSheet(); toast('Meldung gespeichert.'); setView('liste'); }
+    else { btn.disabled=false; btn.textContent='Meldung senden'; }
+  });
+}
+
+function shrink(file){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file), img=new Image();
+    img.onload=()=>{
+      const max=1280, s=Math.min(1,max/Math.max(img.width,img.height));
+      const c=document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url);
+      c.toBlob(b=>b?res(b):rej(new Error('canvas')),'image/jpeg',0.72);
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('img'));};
+    img.src=url;
+  });
+}
+
+function openDetail(id){
+  const r=S.reports.find(x=>x.id===id); if(!r) return;
+  if(r.kind==='check'){
+    openSheet('Übergabe-Check',el(`<div class="kv"><div>Halle</div><div>${h(hallName(r.hall))}</div><div>Zeit</div><div>${h(fmtDT(r.createdAt))}</div><div>Verein</div><div>${h(clubName(r.club))}</div><div>Name</div><div>${h(r.name)}</div><div>Davor</div><div>${h(r.slot&&r.slot.previous?clubName(r.slot.previous):'keine laut Plan')}</div></div>`));
+    return;
+  }
+  const notify=(r.notify||[]).map(w=>{
+    if(w==='school:hausmeister'){const s=cfg().school.hausmeister;return {name:s.name||'Hausmeister',detail:[s.phone,s.email].filter(Boolean).join(' · ')};}
+    const c=club(w); return c?{name:c.name,detail:[c.contact,c.phone,c.email].filter(Boolean).join(' · ')}:{name:w,detail:''};
+  });
+  const expired=daysSince(r.createdAt)>PHOTO_DAYS;
+  const summary=`Hallenbuch HBS – ${catLabel(r.category)}, ${hallName(r.hall)}\n${fmtDT(r.createdAt)} Uhr, gemeldet von ${r.name} (${clubName(r.club)})\n${r.text}\nZuordnung: laufend ${r.slot&&r.slot.current?clubName(r.slot.current):'–'}, davor ${r.slot&&r.slot.previous?clubName(r.slot.previous):'–'}\nStatus: ${STATUS[r.status]||r.status}`;
+  const body=el(`
+    <div class="row" style="justify-content:space-between"><span class="pill ${h(r.status)}">${h(STATUS[r.status]||r.status)}</span><span class="note">${h(fmtDT(r.createdAt))} Uhr</span></div>
+    <h3>${h(catLabel(r.category))} · ${h(hallName(r.hall))}</h3>
+    <p>${h(r.text).replace(/\n/g,'<br>')}</p>
+    <div class="bigph">${(r.photos||[]).map((p,i)=>expired?`<div class="ph gone">Foto nach ${PHOTO_DAYS} Tagen gelöscht</div>`:`<img src="${h(store.photoUrl(p)||'')}" alt="Foto ${i+1}" loading="lazy">`).join('')}</div>
+    <div class="kv"><div>Gemeldet von</div><div>${h(r.name)}, ${h(clubName(r.club))}</div><div>Laufende Belegung</div><div>${h(r.slot&&r.slot.current?clubName(r.slot.current):'keine laut Plan')}</div><div>Vorherige Belegung</div><div>${h(r.slot&&r.slot.previous?clubName(r.slot.previous):'keine laut Plan')}</div></div>
+    <section class="card"><p class="label" style="margin-bottom:6px">Zu informieren</p>${notify.map(n=>`<div class="contact"><div><div class="n">${h(n.name)}</div><div class="d">${h(n.detail||'Kontaktdaten fehlen')}</div></div></div>`).join('')||'<p class="note">Niemand zugeordnet.</p>'}
+      <div class="row" style="margin-top:10px"><button class="btn sm" id="copy">Meldung als Text kopieren</button></div></section>
+    <div class="field"><span class="label">Status setzen</span><div class="row">
+      <button class="btn" data-st="bearbeitung" ${r.status==='bearbeitung'?'disabled':''}>In Bearbeitung</button>
+      <button class="btn ok" data-st="erledigt" ${r.status==='erledigt'?'disabled':''}>Erledigt</button>
+      <button class="btn ghost" data-st="offen" ${r.status==='offen'?'disabled':''}>Wieder öffnen</button></div></div>
+    <div class="log">${(r.log||[]).map(l=>`<span>${h(fmtDT(l.at))} · ${h(STATUS[l.status]||l.status)}${l.name?' · '+h(l.name):''}</span>`).join('')}</div>`);
+  openSheet('Meldung',body);
+  body.querySelector('#copy').addEventListener('click',async()=>{
+    try{ await navigator.clipboard.writeText(summary); toast('Kopiert.'); }
+    catch(e){ const ta=document.createElement('textarea'); ta.value=summary; ta.style.cssText='width:100%;min-height:140px'; body.appendChild(ta); ta.select(); toast('Text markiert, bitte kopieren.'); }
+  });
+  body.querySelectorAll('[data-st]').forEach(b=>b.addEventListener('click',async()=>{
+    const st=b.dataset.st, name=S.me.name||'';
+    const log=(r.log||[]).concat([{at:new Date().toISOString(),status:st,name}]);
+    if(await store.updateReport(r.id,{status:st,log,updatedAt:new Date().toISOString()})){ toast('Status: '+STATUS[st]); closeSheet(); }
+  }));
+}
+
+function editClub(id){
+  const c=cfg(), cl=id?c.clubs.find(x=>x.id===id):{id:'c_'+Date.now().toString(36),name:'',contact:'',phone:'',email:''};
+  const body=el(`<div class="field"><label for="e-name">Verein</label><input type="text" id="e-name" value="${h(cl.name)}" placeholder="z. B. TV Musterstadt"></div>
+    <div class="field"><label for="e-contact">Ansprechpartner</label><input type="text" id="e-contact" value="${h(cl.contact)}" placeholder="Vor- und Nachname"></div>
+    <div class="grid2"><div class="field"><label for="e-phone">Telefon</label><input type="tel" id="e-phone" value="${h(cl.phone)}"></div><div class="field"><label for="e-email">E-Mail</label><input type="email" id="e-email" value="${h(cl.email)}"></div></div>
+    <div class="row"><button class="btn primary" id="save">Speichern</button>${id?'<button class="btn danger" id="del">Löschen</button>':''}</div>`);
+  openSheet(id?'Verein ändern':'Verein anlegen',body);
+  body.querySelector('#save').addEventListener('click',async()=>{
+    const name=body.querySelector('#e-name').value.trim(); if(!name){toast('Vereinsname fehlt.');return;}
+    const c2=JSON.parse(JSON.stringify(c)); const n={id:cl.id,name,contact:body.querySelector('#e-contact').value.trim(),phone:body.querySelector('#e-phone').value.trim(),email:body.querySelector('#e-email').value.trim()};
+    const i=c2.clubs.findIndex(x=>x.id===cl.id); if(i>=0) c2.clubs[i]=n; else c2.clubs.push(n);
+    if(await store.saveConfig(c2)){ closeSheet(); toast('Gespeichert.'); }
+  });
+  const d=body.querySelector('#del'); if(d) d.addEventListener('click',async()=>{
+    if(d.dataset.sure!=='1'){ d.dataset.sure='1'; d.textContent='Wirklich löschen?'; return; }
+    const c2=JSON.parse(JSON.stringify(c)); c2.clubs=c2.clubs.filter(x=>x.id!==cl.id); c2.schedule=c2.schedule.filter(s=>s.club!==cl.id);
+    if(await store.saveConfig(c2)){ closeSheet(); toast('Verein gelöscht.'); }
+  });
+}
+function editSchool(k){
+  const c=cfg(), s=c.school[k];
+  const body=el(`<div class="field"><label for="e-name">Bezeichnung / Name</label><input type="text" id="e-name" value="${h(s.name)}"></div>
+    <div class="grid2"><div class="field"><label for="e-phone">Telefon</label><input type="tel" id="e-phone" value="${h(s.phone)}"></div><div class="field"><label for="e-email">E-Mail</label><input type="email" id="e-email" value="${h(s.email)}"></div></div>
+    <div class="row"><button class="btn primary" id="save">Speichern</button></div>`);
+  openSheet(k==='hausmeister'?'Hausmeister':'Sekretariat',body);
+  body.querySelector('#save').addEventListener('click',async()=>{
+    const c2=JSON.parse(JSON.stringify(c)); c2.school[k]={name:body.querySelector('#e-name').value.trim(),phone:body.querySelector('#e-phone').value.trim(),email:body.querySelector('#e-email').value.trim()};
+    if(await store.saveConfig(c2)){ closeSheet(); toast('Gespeichert.'); }
+  });
+}
+function addSlot(){
+  const c=cfg();
+  if(!c.clubs.length){ toast('Zuerst einen Verein unter „Kontakte“ anlegen.'); return; }
+  const body=el(`<div class="grid2"><div class="field"><label for="s-hall">Halle</label><select id="s-hall">${HALLS.map(x=>`<option value="${x.id}">${h(x.name)}</option>`).join('')}</select></div>
+    <div class="field"><label for="s-wd">Wochentag</label><select id="s-wd">${[1,2,3,4,5,6,0].map(d=>`<option value="${d}">${WD[d]}</option>`).join('')}</select></div></div>
+    <div class="grid2"><div class="field"><label for="s-from">Von</label><input type="time" id="s-from" value="17:00"></div><div class="field"><label for="s-to">Bis</label><input type="time" id="s-to" value="18:30"></div></div>
+    <div class="field"><label for="s-club">Verein</label><select id="s-club">${clubOptions('')}</select></div>
+    <div class="row"><button class="btn primary" id="save">Zeit anlegen</button></div>`);
+  openSheet('Belegungszeit anlegen',body);
+  body.querySelector('#save').addEventListener('click',async()=>{
+    const from=body.querySelector('#s-from').value, to=body.querySelector('#s-to').value;
+    if(!from||!to||hm(from)>=hm(to)){ toast('Bitte gültige Zeit von/bis angeben.'); return; }
+    const c2=JSON.parse(JSON.stringify(c));
+    c2.schedule.push({hall:body.querySelector('#s-hall').value,wd:Number(body.querySelector('#s-wd').value),from,to,club:body.querySelector('#s-club').value});
+    if(await store.saveConfig(c2)){ closeSheet(); toast('Zeit angelegt.'); }
+  });
+}
+
+/* ---------- boot ---------- */
+(function start(){
+  const tok=(location.hash||'').replace('#','');
+  setView(['melden','liste','kontakte','plan'].includes(tok)?tok:'melden');
+  renderMode();
+  if(window.claude&&typeof window.claude.use==='function') connect(); else switchToLocal();
+  setInterval(()=>{ if(S.view==='melden'&&!$('sheet')) renderHome(); },60000);
+})();
+</script>
+</body></html>
