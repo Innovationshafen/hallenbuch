@@ -49,6 +49,8 @@ a{color:var(--accent)}
 .hall{display:grid;grid-template-columns:1fr auto;gap:10px 12px;align-items:start}
 .hall .meta{color:var(--muted);font-size:13px;display:flex;flex-direction:column;gap:2px;margin-top:4px}
 .hall .actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.hall .okline{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px}
+.btn.okbtn{color:var(--ok);border-color:var(--ok);background:transparent}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
 .pill.offen{background:var(--warn-soft);color:var(--warn)}
 .pill.bearbeitung{background:var(--accent-soft);color:var(--accent)}
@@ -95,7 +97,7 @@ a{color:var(--accent)}
 /* forms */
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:13px;font-weight:600}
-input[type=text],input[type=tel],input[type=email],input[type=time],select,textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 11px;min-height:42px}
+input[type=text],input[type=tel],input[type=email],input[type=time],input[type=date],select,textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 11px;min-height:42px}
 textarea{min-height:88px;resize:vertical}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media (max-width:420px){.grid2{grid-template-columns:1fr}}
@@ -121,10 +123,16 @@ textarea{min-height:88px;resize:vertical}
 
 /* schedule */
 .sched{display:flex;flex-direction:column;gap:4px}
-.srow{display:grid;grid-template-columns:34px 92px 1fr auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums}
+.srow{display:grid;grid-template-columns:96px 1fr auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums}
 .srow:first-child{border-top:0}
-.srow .c{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .c{font-weight:500;min-width:0}
+.srow .c small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
 .srow.now{background:var(--accent-soft);border-radius:6px;padding-left:6px;margin-left:-6px}
+
+/* time window */
+.win{background:var(--accent-soft);border-radius:8px;padding:10px 12px;font-size:13.5px;display:flex;flex-direction:column;gap:6px}
+.win .label{color:var(--accent)}
+.news ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 
 /* feedback */
 .rate{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
@@ -146,12 +154,14 @@ textarea{min-height:88px;resize:vertical}
 .sheet .body{overflow:auto;padding:14px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
 .close{border:0;background:var(--surface-2);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:18px;line-height:1}
 
+.toast.act{display:flex;gap:14px;align-items:center;justify-content:space-between;border-radius:12px;width:calc(100% - 32px);max-width:420px}
+.toast.act button{border:0;background:transparent;color:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:0}
 .toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:500;z-index:30;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:no-preference){.toast{animation:pop .18s ease-out}@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}}
 </style>
 
 <header class="top"><div class="wrap">
-  <div class="brand"><small>Heinrich-Böll-Schule</small><h1>Hallenbuch</h1></div>
+  <div class="brand"><small>Sporthallen HBS · LOG</small><h1>Hallenbuch</h1></div>
   <span class="mode" id="modeBadge">Verbinde…</span>
 </div></header>
 
@@ -188,27 +198,50 @@ const PHOTO_DAYS=21;
 const LS_KEY='hallenbuch.v1';
 const LS_ME='hallenbuch.me';
 
-/* Fiktive Testdaten: Vereine, Personen und Nummern sind erfunden. */
+/* Fiktive Testdaten: Vereine, Schulen, Personen und Nummern sind erfunden. */
 function exampleConfig(){
   const clubs=[
-    {id:'c1',name:'TV Musterstadt 1900',contact:'Petra Beispiel',phone:'0171 0000001',email:'hallen@tv-musterstadt.example'},
-    {id:'c2',name:'SG Probebach Handball',contact:'Jonas Muster',phone:'0171 0000002',email:'abteilung@sg-probebach.example'},
-    {id:'c3',name:'TTC Testheim',contact:'Lena Platzhalter',phone:'0171 0000003',email:'vorstand@ttc-testheim.example'},
-    {id:'c4',name:'Volleyballclub Fiktivia',contact:'Ali Demo',phone:'0171 0000004',email:'info@vc-fiktivia.example'}
+    {id:'c1',kind:'verein',name:'TV Musterstadt 1900',contact:'Petra Beispiel',phone:'0171 0000001',email:'hallen@tv-musterstadt.example'},
+    {id:'c2',kind:'verein',name:'SG Probebach Handball',contact:'Jonas Muster',phone:'0171 0000002',email:'abteilung@sg-probebach.example'},
+    {id:'c3',kind:'verein',name:'TTC Testheim',contact:'Lena Platzhalter',phone:'0171 0000003',email:'vorstand@ttc-testheim.example'},
+    {id:'c4',kind:'verein',name:'Volleyballclub Fiktivia',contact:'Ali Demo',phone:'0171 0000004',email:'info@vc-fiktivia.example'},
+    {id:'s1',kind:'schule',name:'HBS Schulsport',contact:'Fachleitung Sport HBS',phone:'06000 123410',email:'sport@hbs.example'},
+    {id:'s2',kind:'schule',name:'LOG Schulsport',contact:'Fachleitung Sport LOG',phone:'06000 223410',email:'sport@log.example'}
   ];
   const schedule=[];
-  const weekday=[['17:00','18:30'],['18:30','20:00'],['20:00','22:00']];               /* vormittags Schulsport */
+  const weekday=[['17:00','18:30'],['18:30','20:00'],['20:00','22:00']];
   const afternoon=[['14:00','15:30'],['15:30','17:00']];                              /* je nach Halle und Tag schon ab 14 Uhr */
   const weekend=[['08:00','11:00'],['11:00','14:00'],['14:00','17:00'],['17:00','20:00'],['20:00','22:00']];
   const big=['c1','c2','c4'];
+  /* Stundenraster je Schule in Doppelstunden, die Zeiten weichen leicht voneinander ab */
+  const RASTER={
+    s1:[['08:00','09:30','1./2. Std.'],['09:50','11:20','3./4. Std.'],['11:40','13:10','5./6. Std.'],['13:55','15:25','7./8. Std.']],
+    s2:[['07:55','09:25','1./2. Std.'],['09:45','11:15','3./4. Std.'],['11:35','13:05','5./6. Std.'],['14:00','15:30','7./8. Std.']]
+  };
   HALLS.forEach((h,hi)=>{
     for(let wd=0;wd<=6;wd++){
       const isWeekend=(wd===0||wd===6);
-      const rows=isWeekend?weekend:((hi+wd)%2===0?afternoon.concat(weekday):weekday);
+      const early=!isWeekend&&(hi+wd)%2===0;
+      const rows=isWeekend?weekend:(early?afternoon.concat(weekday):weekday);
       rows.forEach((t,ti)=>{
         const club=h.id==='tt'?((wd+ti)%3===0?'c1':'c3'):big[(hi+wd+ti)%3];
-        schedule.push({hall:h.id,wd,from:t[0],to:t[1],club});
+        const row={hall:h.id,wd,from:t[0],to:t[1],club};
+        if(h.id==='drei'&&early&&t[0]==='14:00') row.part='Teil 3';
+        schedule.push(row);
       });
+      if(isWeekend) continue;
+      for(let b=0;b<4;b++){
+        const last=(b===3);
+        if(h.id==='drei'){
+          /* teilbare Halle: HBS und LOG parallel in verschiedenen Hallenteilen */
+          schedule.push({hall:h.id,wd,from:RASTER.s1[b][0],to:RASTER.s1[b][1],club:'s1',part:'Teil 1+2',note:RASTER.s1[b][2]});
+          if(!(last&&early)) schedule.push({hall:h.id,wd,from:RASTER.s2[b][0],to:RASTER.s2[b][1],club:'s2',part:'Teil 3',note:RASTER.s2[b][2]});
+        } else {
+          if(last&&early) continue;                                                   /* Verein schon ab 14 Uhr */
+          const sch=(h.id==='alt')?((wd+b)%3===0?'s2':'s1'):((wd+b)%2===0?'s2':'s1');
+          schedule.push({hall:h.id,wd,from:RASTER[sch][b][0],to:RASTER[sch][b][1],club:sch,note:RASTER[sch][b][2]});
+        }
+      }
     }
   });
   return {example:true,clubs,schedule,school:{
@@ -221,7 +254,7 @@ function exampleConfig(){
 const S={
   view:'melden', mode:'connecting', db:null, assets:null, uid:null,
   reports:[], config:null, configFromStore:false, loading:true,
-  me:{club:'',name:''}, filterHall:'all', filterStatus:'offen', showChecks:false,
+  me:{club:'',name:''}, filterHall:'all', filterStatus:'offen', showChecks:false, planDay:new Date().getDay(),
   unsub:[]
 };
 try{ const m=JSON.parse(localStorage.getItem(LS_ME)||'null'); if(m) S.me=m; }catch(e){}
@@ -241,24 +274,89 @@ function fmtD(iso){return new Date(iso).toLocaleDateString('de-DE',{weekday:'sho
 function daysSince(iso){return (Date.now()-new Date(iso).getTime())/86400000;}
 function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600);}
 function saveMe(){try{localStorage.setItem(LS_ME,JSON.stringify(S.me));}catch(e){}}
+function toastAction(msg,label,fn){const t=document.createElement('div');t.className='toast act';const a=document.createElement('span');a.textContent=msg;const b=document.createElement('button');b.type='button';b.textContent=label;b.addEventListener('click',()=>{t.remove();fn();});t.append(a,b);document.body.appendChild(t);setTimeout(()=>t.remove(),5000);}
+function isSchool(c){return !!c&&c.kind==='schule';}
 
 /* ---------- slot attribution ---------- */
+const ENTRY={ja:'Ja, war beim Betreten schon so',nein:'Nein, während der eigenen Belegung entstanden',unklar:'Nicht sicher'};
 function hm(t){const [a,b]=t.split(':').map(Number);return a*60+b;}
-function slotsAt(hallId,date){
-  const wd=date.getDay(), t=date.getHours()*60+date.getMinutes();
-  const rows=cfg().schedule.filter(r=>r.hall===hallId&&Number(r.wd)===wd).sort((a,b)=>hm(a.from)-hm(b.from));
-  const current=rows.find(r=>hm(r.from)<=t&&t<hm(r.to))||null;
-  const before=rows.filter(r=>hm(r.to)<=t);
-  const previous=before.length?before[before.length-1]:null;
-  const next=rows.find(r=>hm(r.from)>t)||null;
-  return {current,previous,next,rows};
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+/* Alle Belegungen einer Halle an einem Tag, mit Gültigkeitszeitraum */
+function rowsOn(hallId,date){
+  const wd=date.getDay(), day=ymd(date);
+  return cfg().schedule.filter(r=>r.hall===hallId&&Number(r.wd)===wd&&(!r.validFrom||r.validFrom<=day)&&(!r.validTo||r.validTo>=day))
+    .sort((a,b)=>hm(a.from)-hm(b.from)||hm(a.to)-hm(b.to));
 }
-function notifyList(hallId,date){
-  const {current,previous}=slotsAt(hallId,date);
-  const out=[{kind:'Hausmeister',name:cfg().school.hausmeister.name||'Hausmeister',who:'school:hausmeister'}];
-  if(current) out.push({kind:'Laufende Belegung',name:clubName(current.club),who:current.club});
-  if(previous&&(!current||previous.club!==current.club)) out.push({kind:'Vorherige Belegung',name:clubName(previous.club),who:previous.club});
+/* Die zuletzt endenden Belegungen; parallele Gruppen enden innerhalb von 20 Minuten */
+function lastGroup(rows){
+  if(!rows.length) return [];
+  const max=Math.max(...rows.map(r=>hm(r.to)));
+  return rows.filter(r=>hm(r.to)>max-20);
+}
+function slotsAt(hallId,date){
+  const t=date.getHours()*60+date.getMinutes(), rows=rowsOn(hallId,date);
+  const current=rows.filter(r=>hm(r.from)<=t&&t<hm(r.to));
+  let previous=lastGroup(rows.filter(r=>hm(r.to)<=t)), prevDay=null;
+  if(!previous.length){
+    for(let i=1;i<=7;i++){
+      const d=new Date(date); d.setDate(d.getDate()-i);
+      const rs=rowsOn(hallId,d);
+      if(rs.length){ previous=lastGroup(rs); prevDay=d; break; }
+    }
+  }
+  const upcoming=rows.filter(r=>hm(r.from)>t);
+  const next=upcoming.length?upcoming.filter(r=>r.from===upcoming[0].from):[];
+  return {current,previous,prevDay,next,rows};
+}
+function slotLabel(r,withTime){return clubName(r.club)+(r.part?' · '+r.part:'')+(withTime&&r.from?' ('+r.from+'–'+r.to+')':'');}
+function slotPack(rows){return rows.map(r=>({club:r.club,part:r.part||'',from:r.from,to:r.to}));}
+/* Ältere Meldungen speichern nur eine Vereins-ID, neuere eine Liste */
+function slotList(x){ if(!x) return []; const a=Array.isArray(x)?x:[x]; return a.map(o=>typeof o==='string'?{club:o}:o); }
+function slotText(x,withTime){const l=slotList(x);return l.length?l.map(o=>slotLabel(o,withTime)).join(', '):'keine laut Plan';}
+function whoName(id){ if(id==='school:hausmeister') return cfg().school.hausmeister.name||'Hausmeister'; return clubName(id); }
+function notifyFor(hallId,date,onEntry){
+  const {current,previous}=slotsAt(hallId,date), ids=['school:hausmeister'];
+  const add=id=>{ if(id&&!ids.includes(id)) ids.push(id); };
+  if(onEntry!=='ja') current.forEach(r=>add(r.club));
+  if(onEntry!=='nein') previous.forEach(r=>add(r.club));
+  return ids;
+}
+
+/* ---------- Zeitfenster: zuletzt in Ordnung bestätigt, wer war seitdem da ---------- */
+function lastCheckBefore(hallId,iso){
+  return S.reports.filter(r=>r.kind==='check'&&r.hall===hallId&&r.createdAt<iso).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0]||null;
+}
+function occupanciesBetween(hallId,fromDate,toDate){
+  const out=[], d=new Date(fromDate); d.setHours(0,0,0,0); let guard=0;
+  while(d<=toDate&&guard++<16){
+    rowsOn(hallId,d).forEach(r=>{
+      const a=new Date(d); a.setHours(0,hm(r.from),0,0);
+      const e=new Date(d); e.setHours(0,hm(r.to),0,0);
+      if(e>fromDate&&a<toDate) out.push({club:r.club,part:r.part||'',from:r.from,to:r.to,day:ymd(d)});
+    });
+    d.setDate(d.getDate()+1);
+  }
   return out;
+}
+function windowInfo(r){
+  if(r.window) return r.window;
+  const chk=lastCheckBefore(r.hall,r.createdAt);
+  if(!chk) return {checkAt:null};
+  const from=new Date(chk.createdAt), to=new Date(r.createdAt);
+  if((to-from)/86400000>14) return {checkAt:chk.createdAt,checkClub:chk.club,users:[],count:0,tooOld:true};
+  const occ=occupanciesBetween(r.hall,from,to), users=[];
+  occ.forEach(o=>{ if(!users.includes(o.club)) users.push(o.club); });
+  return {checkAt:chk.createdAt,checkClub:chk.club,users,count:occ.length,tooOld:false};
+}
+function windowHtml(w){
+  if(!w||!w.checkAt) return `Vor dieser Meldung gibt es keine Bestätigung „Alles in Ordnung“. Eingrenzen lässt sich nur über die vorherige Belegung.`;
+  if(w.tooOld) return `Die letzte Bestätigung „Alles in Ordnung“ liegt mehr als 14 Tage zurück (${h(fmtDT(w.checkAt))}).`;
+  return `<span>Zuletzt als in Ordnung bestätigt: <b>${h(fmtDT(w.checkAt))}</b> von ${h(clubName(w.checkClub))}</span><span>Seitdem in der Halle (${w.count} Belegung${w.count===1?'':'en'}): <b>${h((w.users||[]).map(clubName).join(', ')||'niemand laut Plan')}</b></span>`;
+}
+function windowPlain(w){
+  if(!w||!w.checkAt) return 'keine Bestätigung "Alles in Ordnung" vor der Meldung';
+  if(w.tooOld) return 'letzte Bestätigung älter als 14 Tage';
+  return 'zuletzt in Ordnung '+fmtDT(w.checkAt)+' ('+clubName(w.checkClub)+'), seitdem: '+((w.users||[]).map(clubName).join(', ')||'niemand laut Plan');
 }
 
 /* ---------- storage adapter ---------- */
@@ -280,6 +378,10 @@ const store={
       catch(e){ toast('Änderung fehlgeschlagen: '+(e&&e.message||'')); return false; }
     }
     const d=local.read(); if(d.reports[id]) Object.assign(d.reports[id],patch); local.write(d); loadLocal(); return true;
+  },
+  async removeReport(id){
+    if(S.mode==='shared'){ try{ await S.db.doc('reports/'+id).delete(); return true; }catch(e){ toast('Rückgängig fehlgeschlagen.'); return false; } }
+    const d=local.read(); delete d.reports[id]; local.write(d); loadLocal(); return true;
   },
   async saveConfig(c){
     c=JSON.parse(JSON.stringify(c)); delete c.example;
@@ -303,16 +405,26 @@ function loadLocal(){
   S.reports=Object.values(d.reports).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
   S.config=d.config; S.loading=false; render();
 }
-/* Fiktive Beispielmeldung für den Test ohne Konto: einmal pro Gerät angelegt. */
+/* Fiktive Beispieleinträge für den Test ohne Konto: einmal pro Gerät angelegt, Stand 2 ergänzt die Bestätigung davor. */
 function seedLocal(){
-  const d=local.read(); if(d.seeded) return; d.seeded=true;
+  const d=local.read(); if(d.seeded===2) return;
   const y=new Date(); y.setDate(y.getDate()-1);
   const at=(hh,mm)=>{const t=new Date(y); t.setHours(hh,mm,0,0); return t.toISOString();};
-  d.reports['beispiel_schaden']={id:'beispiel_schaden',kind:'meldung',hall:'drei',createdAt:at(18,35),club:'c2',name:'Jonas Muster',by:null,category:'schaden',
-    text:'Beispielmeldung (fiktiv): Prallschutzmatte an der Südwand eingerissen, ca. 30 cm. Beim Betreten der Halle bereits so vorgefunden.',
-    photos:[],status:'offen',slot:{current:'c2',previous:'c1'},notify:['school:hausmeister','c2','c1'],log:[{at:at(18,35),status:'offen',name:'Jonas Muster'}]};
-  d.reports['beispiel_check']={id:'beispiel_check',kind:'check',hall:'drei',createdAt:at(20,2),club:'c4',name:'Ali Demo',by:null,slot:{current:'c4',previous:'c2'}};
-  local.write(d);
+  if(!d.seeded){
+    d.reports['beispiel_schaden']={id:'beispiel_schaden',kind:'meldung',hall:'drei',createdAt:at(18,35),club:'c2',name:'Jonas Muster',by:null,category:'schaden',
+      text:'Beispielmeldung (fiktiv): Prallschutzmatte an der Südwand eingerissen, ca. 30 cm.',onEntry:'ja',
+      photos:[],status:'offen',slot:{current:[{club:'c2'}],previous:[{club:'c1'}]},notify:['school:hausmeister','c1'],log:[{at:at(18,35),status:'offen',name:'Jonas Muster'}]};
+    d.reports['beispiel_check']={id:'beispiel_check',kind:'check',hall:'drei',createdAt:at(20,2),club:'c4',name:'Ali Demo',by:null,slot:{current:[{club:'c4'}],previous:[{club:'c2'}]}};
+  }
+  const sch=d.reports['beispiel_schaden'];
+  if(sch){
+    if(!sch.onEntry) sch.onEntry='ja';
+    if(!d.reports['beispiel_check0']){
+      const t=new Date(new Date(sch.createdAt).getTime()-95*60000).toISOString();
+      d.reports['beispiel_check0']={id:'beispiel_check0',kind:'check',hall:sch.hall,createdAt:t,club:'c1',name:'Petra Beispiel',by:null,slot:{current:[{club:'c1'}],previous:[]}};
+    }
+  }
+  d.seeded=2; local.write(d);
 }
 function switchToLocal(msg){
   S.unsub.forEach(u=>{try{u();}catch(e){}}); S.unsub=[];
@@ -360,40 +472,48 @@ function render(){
   else renderPlan();
 }
 
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
 function renderHome(){
   const now=new Date();
   let html='';
   if(S.mode==='local') html+=`<div class="banner">Testversion: Deine Einträge bleiben nur auf diesem Gerät. Spiel den Ablauf einfach einmal komplett durch.</div>`;
-  if(cfg().example) html+=`<div class="banner info">Testphase: Vereine, Ansprechpartner und Belegungsplan sind fiktiv.</div>`;
-  let intro=false; try{ intro=localStorage.getItem('hallenbuch.intro')!=='1'; }catch(e){ intro=true; }
+  if(cfg().example) html+=`<div class="banner info">Testphase: Vereine, Schulen, Ansprechpartner und Belegungsplan sind fiktiv.</div>`;
+  const intro=lsGet('hallenbuch.intro')!=='1', news=!intro&&lsGet('hallenbuch.news2')!=='1';
   if(intro) html+=`<section class="card stack" style="gap:8px"><h3>So funktioniert das Hallenbuch</h3>
-    <p><b>1. Trainingsbeginn:</b> Halle kurz anschauen und „Halle in Ordnung“ tippen. Dauert zehn Sekunden und ersetzt die Unterschrift im Papierbuch.</p>
-    <p><b>2. Etwas kaputt oder auffällig?</b> „Mangel melden“, Foto machen, zwei Sätze schreiben. Die App ordnet die Meldung automatisch der laufenden und der vorherigen Belegung zu.</p>
-    <p><b>3. Kümmern:</b> Unter „Meldungen“ sehen alle, was offen ist. Hausmeister oder Verein setzen den Status auf „In Bearbeitung“ und „Erledigt“.</p>
+    <p><b>1. Etwas kaputt oder auffällig?</b> „Mangel melden“, Foto machen, zwei Sätze schreiben. Die App ordnet die Meldung automatisch den Belegungen zu und zeigt, wer informiert wird.</p>
+    <p><b>2. Alles gut?</b> Freiwillig mit einem Tipp „Alles in Ordnung“ bestätigen. Je öfter das passiert, desto genauer lässt sich später eingrenzen, wann ein Schaden entstanden ist.</p>
+    <p><b>3. Kümmern:</b> Unter „Meldungen“ sehen alle, was offen ist. Hausmeister, Schule oder Verein setzen den Status auf „In Bearbeitung“ und „Erledigt“.</p>
     <p class="note">Deine Rückmeldung zur App kannst du jederzeit unter „Feedback“ abgeben.</p>
     <div class="row"><button class="btn sm" id="hideIntro">Verstanden, ausblenden</button></div></section>`;
+  if(news) html+=`<section class="card stack news" style="gap:8px"><h3>Neu nach euren Rückmeldungen</h3><ul>
+    <li>„Mangel melden“ steht jetzt vorn. „Alles in Ordnung“ ist freiwillig und braucht nur noch einen Tipp.</li>
+    <li>Beim Melden fragt die App, ob der Mangel beim Betreten schon da war.</li>
+    <li>Jede Meldung zeigt, wann die Halle zuletzt als in Ordnung bestätigt wurde und wer seitdem dort war.</li>
+    <li>Im Plan stehen jetzt auch HBS und LOG, in der Dreifeldhalle auch parallel in verschiedenen Hallenteilen.</li></ul>
+    <div class="row"><button class="btn sm" id="hideNews">Verstanden, ausblenden</button></div></section>`;
   html+=`<div class="row" style="justify-content:space-between"><h2>Hallen</h2><span class="note">${h(now.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'}))}, ${h(now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}))} Uhr</span></div>`;
   HALLS.forEach(hall=>{
     const open=S.reports.filter(r=>r.hall===hall.id&&r.kind==='meldung'&&r.status!=='erledigt');
     const lastCheck=S.reports.find(r=>r.hall===hall.id&&r.kind==='check');
-    const {current,previous,next}=slotsAt(hall.id,now);
+    const sl=slotsAt(hall.id,now);
+    const nowLine=sl.current.length?`Jetzt: <b>${h(sl.current.map(r=>slotLabel(r)).join(', '))}</b>`
+      :(sl.next.length?`Nächste Belegung ${h(sl.next[0].from)} Uhr: ${h(sl.next.map(r=>slotLabel(r)).join(', '))}`:'Heute keine Belegung mehr');
+    const prevLine=sl.previous.length?`Davor: ${h(sl.previous.map(r=>slotLabel(r)).join(', '))}${sl.prevDay?' ('+h(WD[sl.prevDay.getDay()])+'.)':' (bis '+h(sl.previous.map(r=>r.to).sort().pop())+')'}`:'';
     html+=`<section class="card hall">
       <div><h3>${h(hall.name)}</h3>
-        <div class="meta">
-          <span>${current?`Jetzt: <b>${h(clubName(current.club))}</b> (${h(current.from)}–${h(current.to)})`:(next?`Nächste Belegung ${h(next.from)} Uhr: ${h(clubName(next.club))}`:'Keine Vereinsbelegung mehr heute')}</span>
-          ${previous?`<span>Davor: ${h(clubName(previous.club))} (bis ${h(previous.to)})</span>`:''}
-          <span>${lastCheck?`Letzter Check: ${h(fmtDT(lastCheck.createdAt))}, ${h(clubName(lastCheck.club))}`:'Noch kein Übergabe-Check'}</span>
-        </div></div>
+        <div class="meta"><span>${nowLine}</span>${prevLine?`<span>${prevLine}</span>`:''}</div></div>
       <div>${open.length?`<span class="pill offen"><span class="dot"></span>${open.length} offen</span>`:`<span class="pill ok">Nichts offen</span>`}</div>
-      <div class="actions">
-        <button class="btn ok" data-check="${hall.id}">Halle in Ordnung</button>
-        <button class="btn primary" data-report="${hall.id}">Mangel melden</button>
-      </div></section>`;
+      <div class="actions"><button class="btn primary" data-report="${hall.id}">Mangel melden</button></div>
+      <div class="okline"><button class="btn sm okbtn" data-check="${hall.id}">✓ Alles in Ordnung</button>
+        <span class="note">${lastCheck?`Zuletzt bestätigt: ${h(fmtDT(lastCheck.createdAt))}, ${h(clubName(lastCheck.club))}`:'Freiwillig, ein Tipp genügt'}</span></div>
+      </section>`;
   });
-  html+=`<p class="note">Beim Trainingsbeginn kurz bestätigen: „Halle in Ordnung“ oder einen Mangel melden. Ein Mangel beim Start wird der vorherigen Belegung zugeordnet.</p>`;
+  html+=`<p class="note">Jede Meldung wird automatisch den Belegungen laut Plan zugeordnet. „Alles in Ordnung“ ist freiwillig und hilft, den Zeitraum eines Schadens einzugrenzen.</p>`;
   $('home').innerHTML=html;
-  const hi=$('hideIntro'); if(hi) hi.addEventListener('click',()=>{ try{localStorage.setItem('hallenbuch.intro','1');}catch(e){} renderHome(); });
-  $('home').querySelectorAll('[data-check]').forEach(b=>b.addEventListener('click',()=>openCheck(b.dataset.check)));
+  const hi=$('hideIntro'); if(hi) hi.addEventListener('click',()=>{ lsSet('hallenbuch.intro','1'); lsSet('hallenbuch.news2','1'); renderHome(); });
+  const hn=$('hideNews'); if(hn) hn.addEventListener('click',()=>{ lsSet('hallenbuch.news2','1'); renderHome(); });
+  $('home').querySelectorAll('[data-check]').forEach(b=>b.addEventListener('click',()=>quickCheck(b.dataset.check)));
   $('home').querySelectorAll('[data-report]').forEach(b=>b.addEventListener('click',()=>openReportForm(b.dataset.report)));
 }
 
@@ -404,14 +524,14 @@ function renderList(){
   if(S.filterStatus==='offen') items=items.filter(r=>r.status!=='erledigt');
   let html=`<h2>Meldungen</h2>
   <div class="chips" id="fh">${[{id:'all',name:'Alle Hallen'},...HALLS].map(x=>`<button class="chip" data-h="${x.id}" aria-pressed="${S.filterHall===x.id}">${h(x.name)}</button>`).join('')}</div>
-  <div class="chips" id="fs"><button class="chip" data-s="offen" aria-pressed="${S.filterStatus==='offen'}">Nur offene</button><button class="chip" data-s="alle" aria-pressed="${S.filterStatus==='alle'}">Alle</button><button class="chip" data-s="checks" aria-pressed="${S.showChecks}">Übergabe-Checks (${checks.length})</button></div>`;
+  <div class="chips" id="fs"><button class="chip" data-s="offen" aria-pressed="${S.filterStatus==='offen'}">Nur offene</button><button class="chip" data-s="alle" aria-pressed="${S.filterStatus==='alle'}">Alle</button><button class="chip" data-s="checks" aria-pressed="${S.showChecks}">Bestätigungen (${checks.length})</button></div>`;
   if(S.loading) html+=`<p class="note">Lade gemeinsame Daten…</p>`;
   let rows=items.map(r=>({t:r.createdAt,r}));
   if(S.showChecks) rows=rows.concat(checks.map(r=>({t:r.createdAt,r})));
   rows.sort((a,b)=>b.t.localeCompare(a.t));
   if(!rows.length) html+=`<div class="empty">${S.loading?'Noch keine Daten.':'Keine Meldungen in dieser Auswahl.'}<br><span class="note">Neue Meldung über „Hallen“ → „Mangel melden“.</span></div>`;
   html+=`<div class="list">`+rows.map(({r})=>{
-    if(r.kind==='check') return `<button class="item check" data-id="${h(r.id)}"><span class="stripe"></span><span><span class="t">Halle in Ordnung · ${h(hallName(r.hall))}</span><span class="s"> ${h(clubName(r.club))}, ${h(r.name)}</span></span><span class="right"><span>${h(fmtD(r.createdAt))}</span><span>${h(fmtT(r.createdAt))}</span></span></button>`;
+    if(r.kind==='check') return `<button class="item check" data-id="${h(r.id)}"><span class="stripe"></span><span><span class="t">Alles in Ordnung · ${h(hallName(r.hall))}</span><span class="s"> ${h(clubName(r.club))}, ${h(r.name)}</span></span><span class="right"><span>${h(fmtD(r.createdAt))}</span><span>${h(fmtT(r.createdAt))}</span></span></button>`;
     return `<button class="item ${h(r.status)}" data-id="${h(r.id)}"><span class="stripe"></span>
       <span style="min-width:0"><span class="t">${h(catLabel(r.category))} · ${h(hallName(r.hall))}</span>
       <span class="s" style="display:block">${h(clubName(r.club))}, ${h(r.name)}${r.photos&&r.photos.length?` · ${r.photos.length} Foto${r.photos.length>1?'s':''}`:''}</span>
@@ -426,19 +546,17 @@ function renderList(){
 
 function renderContacts(){
   const c=cfg();
-  let html=`<div class="row" style="justify-content:space-between"><h2>Kontakte</h2><button class="btn sm" id="addClub">+ Verein</button></div>`;
+  const line=cl=>`<div class="contact" data-club="${h(cl.id)}" role="button" tabindex="0"><div><div class="n">${h(cl.name)}</div><div class="d">${h(cl.contact||'Ansprechpartner fehlt')}${cl.phone?' · '+h(cl.phone):''}${cl.email?' · '+h(cl.email):''}</div></div><span class="note">Ändern</span></div>`;
+  let html=`<div class="row" style="justify-content:space-between"><h2>Kontakte</h2><button class="btn sm" id="addClub">+ Verein / Schule</button></div>`;
   if(c.example) html+=`<div class="banner info">Fiktive Testdaten. Tippe auf einen Eintrag, um ihn zu ändern.</div>`;
-  html+=`<section class="card"><p class="label" style="margin-bottom:8px">Schule</p>`;
+  html+=`<section class="card"><p class="label" style="margin-bottom:8px">Hausmeister und Sekretariat</p>`;
   ['hausmeister','sekretariat'].forEach(k=>{
     const s=c.school[k];
     html+=`<div class="contact" data-school="${k}" role="button" tabindex="0"><div><div class="n">${h(s.name||(k==='hausmeister'?'Hausmeister':'Sekretariat'))}</div><div class="d">${h(s.phone||'Telefon fehlt')}${s.email?' · '+h(s.email):''}</div></div><span class="note">Ändern</span></div>`;
   });
-  html+=`</section><section class="card"><p class="label" style="margin-bottom:8px">Vereine und Ansprechpartner</p>`;
-  if(!c.clubs.length) html+=`<p class="note">Noch kein Verein angelegt.</p>`;
-  c.clubs.forEach(cl=>{
-    html+=`<div class="contact" data-club="${h(cl.id)}" role="button" tabindex="0"><div><div class="n">${h(cl.name)}</div><div class="d">${h(cl.contact||'Ansprechpartner fehlt')}${cl.phone?' · '+h(cl.phone):''}${cl.email?' · '+h(cl.email):''}</div></div><span class="note">Ändern</span></div>`;
-  });
-  html+=`</section>`;
+  const schools=c.clubs.filter(isSchool), clubs=c.clubs.filter(x=>!isSchool(x));
+  html+=`</section><section class="card"><p class="label" style="margin-bottom:8px">Schulen</p>${schools.map(line).join('')||'<p class="note">Noch keine Schule angelegt.</p>'}</section>`;
+  html+=`<section class="card"><p class="label" style="margin-bottom:8px">Vereine und Ansprechpartner</p>${clubs.map(line).join('')||'<p class="note">Noch kein Verein angelegt.</p>'}</section>`;
   $('kontakte').innerHTML=html;
   $('addClub').addEventListener('click',()=>editClub(null));
   $('kontakte').querySelectorAll('[data-club]').forEach(e=>{const f=()=>editClub(e.dataset.club);e.addEventListener('click',f);e.addEventListener('keydown',ev=>{if(ev.key==='Enter')f();});});
@@ -446,22 +564,25 @@ function renderContacts(){
 }
 
 function renderPlan(){
-  const c=cfg(), now=new Date();
+  const c=cfg(), now=new Date(), day=S.planDay, t=now.getHours()*60+now.getMinutes(), today=ymd(now);
   let html=`<div class="row" style="justify-content:space-between"><h2>Belegungsplan</h2><button class="btn sm" id="addSlot">+ Zeit</button></div>`;
-  if(c.example) html+=`<div class="banner info">Fiktiver Testplan. Vormittags Schulsport, Vereine je nach Tag ab 14 oder 17 Uhr, am Wochenende ganztägig.</div>`;
-  html+=`<p class="note">Der Plan ordnet jede Meldung der laufenden und der vorherigen Belegung zu und bestimmt, wer informiert wird.</p>`;
+  if(c.example) html+=`<div class="banner info">Fiktiver Testplan. Vormittags Schulsport von HBS und LOG, Vereine je nach Tag ab 14 oder 17 Uhr, am Wochenende ganztägig.</div>`;
+  html+=`<p class="note">Der Plan ordnet jede Meldung den Belegungen zu und bestimmt, wer informiert wird. Mehrere Gruppen können gleichzeitig in einer Halle sein.</p>`;
+  html+=`<div class="chips" id="pd">${[1,2,3,4,5,6,0].map(d=>`<button class="chip" data-d="${d}" aria-pressed="${d===day}">${WD[d]}${d===now.getDay()?' · heute':''}</button>`).join('')}</div>`;
   HALLS.forEach(hall=>{
     html+=`<section class="card"><h3 style="margin-bottom:8px">${h(hall.name)}</h3>`;
-    const rows=c.schedule.filter(r=>r.hall===hall.id).sort((a,b)=>(Number(a.wd)||7)-(Number(b.wd)||7)||hm(a.from)-hm(b.from));
-    if(!rows.length) html+=`<p class="note">Keine Belegung eingetragen.</p>`;
+    const rows=c.schedule.filter(r=>r.hall===hall.id&&Number(r.wd)===day).sort((a,b)=>hm(a.from)-hm(b.from)||hm(a.to)-hm(b.to));
+    if(!rows.length) html+=`<p class="note">Keine Belegung an diesem Tag.</p>`;
     html+=`<div class="sched">`+rows.map(r=>{
-      const isNow=Number(r.wd)===now.getDay()&&hm(r.from)<=now.getHours()*60+now.getMinutes()&&now.getHours()*60+now.getMinutes()<hm(r.to);
-      const idx=c.schedule.indexOf(r);
-      return `<div class="srow${isNow?' now':''}"><span>${h(WD[Number(r.wd)]||'?')}</span><span>${h(r.from)}–${h(r.to)}</span><span class="c">${h(clubName(r.club))}</span><button class="btn sm ghost" data-del="${idx}" aria-label="Zeit löschen">✕</button></div>`;
+      const valid=(!r.validFrom||r.validFrom<=today)&&(!r.validTo||r.validTo>=today);
+      const isNow=valid&&day===now.getDay()&&hm(r.from)<=t&&t<hm(r.to);
+      const extra=[r.part,r.note,(r.validFrom||r.validTo)?('gültig '+(r.validFrom||'…')+' bis '+(r.validTo||'…')):''].filter(Boolean).join(' · ');
+      return `<div class="srow${isNow?' now':''}"><span>${h(r.from)}–${h(r.to)}</span><span class="c">${h(clubName(r.club))}${extra?`<small>${h(extra)}</small>`:''}</span><button class="btn sm ghost" data-del="${c.schedule.indexOf(r)}" aria-label="Zeit löschen">✕</button></div>`;
     }).join('')+`</div></section>`;
   });
   $('plan').innerHTML=html;
   $('addSlot').addEventListener('click',addSlot);
+  $('pd').querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>{ S.planDay=Number(b.dataset.d); renderPlan(); }));
   $('plan').querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async()=>{
     const c2=JSON.parse(JSON.stringify(cfg())); c2.schedule.splice(Number(b.dataset.del),1);
     if(await store.saveConfig(c2)) toast('Zeit entfernt');
@@ -481,50 +602,72 @@ function openSheet(title,bodyEl){
 }
 function closeSheet(){ const s=$('sheet'); if(s) s.remove(); document.body.style.overflow=''; }
 function el(html){ const d=document.createElement('div'); d.className='stack'; d.innerHTML=html; return d; }
-function clubOptions(sel){ return cfg().clubs.map(c=>`<option value="${h(c.id)}"${c.id===sel?' selected':''}>${h(c.name)}</option>`).join(''); }
+function clubOptions(sel){
+  const opt=c=>`<option value="${h(c.id)}"${c.id===sel?' selected':''}>${h(c.name)}</option>`;
+  const schools=cfg().clubs.filter(isSchool), clubs=cfg().clubs.filter(x=>!isSchool(x));
+  return (clubs.length?`<optgroup label="Vereine">${clubs.map(opt).join('')}</optgroup>`:'')+(schools.length?`<optgroup label="Schulen">${schools.map(opt).join('')}</optgroup>`:'');
+}
 function whoFields(){
-  return `<div class="grid2"><div class="field"><label for="f-club">Verein</label><select id="f-club"><option value="">Bitte wählen</option>${clubOptions(S.me.club)}</select></div>
+  return `<div class="grid2"><div class="field"><label for="f-club">Verein / Schule</label><select id="f-club"><option value="">Bitte wählen</option>${clubOptions(S.me.club)}</select></div>
   <div class="field"><label for="f-name">Dein Name</label><input type="text" id="f-name" value="${h(S.me.name)}" placeholder="Vor- und Nachname" autocomplete="name"></div></div>`;
 }
 function readWho(root){
   const club=root.querySelector('#f-club').value, name=root.querySelector('#f-name').value.trim();
-  if(!club){ toast('Bitte Verein wählen.'); return null; }
+  if(!club){ toast('Bitte Verein oder Schule wählen.'); return null; }
   if(!name){ toast('Bitte Namen eintragen.'); return null; }
   S.me={club,name}; saveMe(); return {club,name};
 }
 
+/* Bestätigung mit einem Tipp. Nur beim ersten Mal fragt die App nach Verein und Name. */
+async function saveCheck(hallId,who){
+  const now=new Date(), sl=slotsAt(hallId,now);
+  const r={id:uid(),kind:'check',hall:hallId,createdAt:now.toISOString(),club:who.club,name:who.name,by:S.uid||null,
+    slot:{current:slotPack(sl.current),previous:slotPack(sl.previous)}};
+  if(await store.addReport(r)){ toastAction(hallName(hallId)+': in Ordnung bestätigt.','Rückgängig',()=>store.removeReport(r.id)); return true; }
+  return false;
+}
+function quickCheck(hallId){
+  if(S.me.club&&S.me.name&&club(S.me.club)) return saveCheck(hallId,{club:S.me.club,name:S.me.name});
+  openCheck(hallId);
+}
 function openCheck(hallId){
-  const now=new Date(), {current,previous}=slotsAt(hallId,now);
-  const body=el(`<p>Du bestätigst, dass die <b>${h(hallName(hallId))}</b> bei Übernahme in Ordnung ist.</p>${whoFields()}
-    <div class="attrib"><span>Zeitpunkt: <b>${h(fmtDT(now.toISOString()))}</b></span><span>Laufende Belegung: <b>${h(current?clubName(current.club):'keine laut Plan')}</b></span><span>Vorherige Belegung: <b>${h(previous?clubName(previous.club):'keine laut Plan')}</b></span></div>
-    <div class="row"><button class="btn ok" id="go">Halle in Ordnung</button><button class="btn" id="alt">Doch ein Mangel</button></div>`);
-  openSheet('Übergabe-Check',body);
+  const body=el(`<p>Du bestätigst, dass die <b>${h(hallName(hallId))}</b> in Ordnung ist. Verein und Name merkt sich die App, danach genügt ein Tipp.</p>${whoFields()}
+    <div class="row"><button class="btn ok" id="go">Alles in Ordnung</button><button class="btn" id="alt">Doch ein Mangel</button></div>`);
+  openSheet('Alles in Ordnung',body);
   body.querySelector('#go').addEventListener('click',async()=>{
     const who=readWho(body); if(!who) return;
-    const r={id:uid(),kind:'check',hall:hallId,createdAt:now.toISOString(),club:who.club,name:who.name,by:S.uid||null,
-      slot:{current:current?current.club:null,previous:previous?previous.club:null}};
-    if(await store.addReport(r)){ closeSheet(); toast('Check gespeichert. Gutes Training!'); }
+    closeSheet(); await saveCheck(hallId,who);
   });
   body.querySelector('#alt').addEventListener('click',()=>openReportForm(hallId));
 }
 
 function openReportForm(hallId){
-  const now=new Date(), photos=[];
+  const now=new Date(), iso=now.toISOString(), photos=[];
   const body=el(`
     <div class="field"><label for="f-hall">Halle</label><select id="f-hall">${HALLS.map(x=>`<option value="${x.id}"${x.id===hallId?' selected':''}>${h(x.name)}</option>`).join('')}</select></div>
     ${whoFields()}
     <div class="field"><span class="label">Art</span><div class="chips" id="f-cat">${CATS.map((c,i)=>`<button type="button" class="chip" data-cat="${c.id}" aria-pressed="${i===0}">${h(c.label)}</button>`).join('')}</div></div>
     <div class="field"><label for="f-text">Was ist aufgefallen?</label><textarea id="f-text" placeholder="Wo genau, was, seit wann? Zum Beispiel: Prallschutz an der Südwand gerissen, ca. 30 cm."></textarea></div>
     <div class="field"><span class="label">Fotos (max. 3, werden nach ${PHOTO_DAYS} Tagen gelöscht)</span><div class="photos" id="f-photos"></div><input type="file" id="f-file" accept="image/*" capture="environment" class="sr"></div>
+    <div class="field"><span class="label">War das beim Betreten schon so?</span><div class="chips" id="f-entry">
+      <button type="button" class="chip" data-v="ja" aria-pressed="false">Ja, schon da</button>
+      <button type="button" class="chip" data-v="nein" aria-pressed="false">Nein, bei uns passiert</button>
+      <button type="button" class="chip" data-v="unklar" aria-pressed="false">Weiß nicht</button></div></div>
     <div class="attrib" id="f-attrib"></div>
     <div class="row"><button class="btn primary" id="send">Meldung senden</button></div>`);
   openSheet('Mangel melden',body);
+  const entry=()=>{const c=body.querySelector('#f-entry [aria-pressed="true"]');return c?c.dataset.v:'';};
   const attrib=()=>{
-    const hid=body.querySelector('#f-hall').value, {current,previous}=slotsAt(hid,now);
-    body.querySelector('#f-attrib').innerHTML=`<span class="label">Zuordnung</span><span>Zeitpunkt: <b>${h(fmtDT(now.toISOString()))}</b></span><span>Laufende Belegung: <b>${h(current?clubName(current.club)+' ('+current.from+'–'+current.to+')':'keine laut Plan')}</b></span><span>Vorherige Belegung: <b>${h(previous?clubName(previous.club)+' (bis '+previous.to+')':'keine laut Plan')}</b></span><span>Wird informiert: <b>${h(notifyList(hid,now).map(n=>n.name).join(', '))}</b></span>`;
+    const hid=body.querySelector('#f-hall').value, sl=slotsAt(hid,now);
+    body.querySelector('#f-attrib').innerHTML=`<span class="label">Zuordnung</span><span>Zeitpunkt: <b>${h(fmtDT(iso))}</b></span>
+      <span>Laufende Belegung: <b>${h(slotText(sl.current,true))}</b></span>
+      <span>Vorherige Belegung: <b>${h(slotText(sl.previous,true))}</b></span>
+      ${windowHtml(windowInfo({hall:hid,createdAt:iso}))}
+      <span>Wird informiert: <b>${h(notifyFor(hid,now,entry()).map(whoName).join(', '))}</b></span>`;
   };
   attrib(); body.querySelector('#f-hall').addEventListener('change',attrib);
-  body.querySelector('#f-cat').addEventListener('click',e=>{const c=e.target.closest('.chip'); if(!c) return; body.querySelectorAll('#f-cat .chip').forEach(x=>x.setAttribute('aria-pressed','false')); c.setAttribute('aria-pressed','true');});
+  const single=sel=>body.querySelector(sel).addEventListener('click',e=>{const c=e.target.closest('.chip'); if(!c) return; body.querySelectorAll(sel+' .chip').forEach(x=>x.setAttribute('aria-pressed','false')); c.setAttribute('aria-pressed','true'); attrib();});
+  single('#f-cat'); single('#f-entry');
   const file=body.querySelector('#f-file');
   const drawPhotos=()=>{
     const box=body.querySelector('#f-photos');
@@ -542,16 +685,19 @@ function openReportForm(hallId){
     const who=readWho(body); if(!who) return;
     const text=body.querySelector('#f-text').value.trim();
     if(!text){ toast('Bitte kurz beschreiben, was aufgefallen ist.'); return; }
+    const onEntry=entry();
+    if(!onEntry){ toast('Bitte angeben, ob es beim Betreten schon so war.'); return; }
     const btn=body.querySelector('#send'); btn.disabled=true; btn.textContent='Wird gespeichert…';
-    const hid=body.querySelector('#f-hall').value, {current,previous}=slotsAt(hid,now);
+    const hid=body.querySelector('#f-hall').value, sl=slotsAt(hid,now);
     const stored=[];
     try{ for(const p of photos){ stored.push(await store.uploadPhoto(p.blob)); } }
     catch(e){ toast('Foto-Upload fehlgeschlagen: '+(e&&e.message||'')); btn.disabled=false; btn.textContent='Meldung senden'; return; }
-    const r={id:uid(),kind:'meldung',hall:hid,createdAt:now.toISOString(),club:who.club,name:who.name,by:S.uid||null,
-      category:body.querySelector('#f-cat [aria-pressed="true"]').dataset.cat,text,photos:stored,status:'offen',
-      slot:{current:current?current.club:null,previous:previous?previous.club:null},
-      notify:notifyList(hid,now).map(n=>n.who),
-      log:[{at:now.toISOString(),status:'offen',name:who.name}]};
+    const r={id:uid(),kind:'meldung',hall:hid,createdAt:iso,club:who.club,name:who.name,by:S.uid||null,
+      category:body.querySelector('#f-cat [aria-pressed="true"]').dataset.cat,text,photos:stored,status:'offen',onEntry,
+      slot:{current:slotPack(sl.current),previous:slotPack(sl.previous)},
+      window:windowInfo({hall:hid,createdAt:iso}),
+      notify:notifyFor(hid,now,onEntry),
+      log:[{at:iso,status:'offen',name:who.name}]};
     if(await store.addReport(r)){ closeSheet(); toast('Meldung gespeichert.'); setView('liste'); }
     else { btn.disabled=false; btn.textContent='Meldung senden'; }
   });
@@ -573,22 +719,29 @@ function shrink(file){
 
 function openDetail(id){
   const r=S.reports.find(x=>x.id===id); if(!r) return;
+  const sl=r.slot||{};
   if(r.kind==='check'){
-    openSheet('Übergabe-Check',el(`<div class="kv"><div>Halle</div><div>${h(hallName(r.hall))}</div><div>Zeit</div><div>${h(fmtDT(r.createdAt))}</div><div>Verein</div><div>${h(clubName(r.club))}</div><div>Name</div><div>${h(r.name)}</div><div>Davor</div><div>${h(r.slot&&r.slot.previous?clubName(r.slot.previous):'keine laut Plan')}</div></div>`));
+    openSheet('Alles in Ordnung',el(`<div class="kv"><div>Halle</div><div>${h(hallName(r.hall))}</div><div>Zeit</div><div>${h(fmtDT(r.createdAt))}</div><div>Bestätigt von</div><div>${h(r.name)}, ${h(clubName(r.club))}</div><div>Laufende Belegung</div><div>${h(slotText(sl.current))}</div><div>Davor</div><div>${h(slotText(sl.previous))}</div></div>`));
     return;
   }
   const notify=(r.notify||[]).map(w=>{
     if(w==='school:hausmeister'){const s=cfg().school.hausmeister;return {name:s.name||'Hausmeister',detail:[s.phone,s.email].filter(Boolean).join(' · ')};}
     const c=club(w); return c?{name:c.name,detail:[c.contact,c.phone,c.email].filter(Boolean).join(' · ')}:{name:w,detail:''};
   });
-  const expired=daysSince(r.createdAt)>PHOTO_DAYS;
-  const summary=`Hallenbuch HBS – ${catLabel(r.category)}, ${hallName(r.hall)}\n${fmtDT(r.createdAt)} Uhr, gemeldet von ${r.name} (${clubName(r.club)})\n${r.text}\nZuordnung: laufend ${r.slot&&r.slot.current?clubName(r.slot.current):'–'}, davor ${r.slot&&r.slot.previous?clubName(r.slot.previous):'–'}\nStatus: ${STATUS[r.status]||r.status}`;
+  const expired=daysSince(r.createdAt)>PHOTO_DAYS, w=windowInfo(r);
+  const hint=r.onEntry==='ja'?'Laut Meldung beim Betreten schon vorhanden. Infrage kommen die Belegungen vor der meldenden Gruppe.'
+    :(r.onEntry==='nein'?'Laut Meldung während der eigenen Belegung entstanden.':'');
+  const summary=`Hallenbuch – ${catLabel(r.category)}, ${hallName(r.hall)}\n${fmtDT(r.createdAt)} Uhr, gemeldet von ${r.name} (${clubName(r.club)})\n${r.text}\nBeim Betreten schon so: ${r.onEntry?ENTRY[r.onEntry]:'keine Angabe'}\nLaufende Belegung: ${slotText(sl.current)}\nVorherige Belegung: ${slotText(sl.previous)}\nZeitfenster: ${windowPlain(w)}\nStatus: ${STATUS[r.status]||r.status}`;
   const body=el(`
     <div class="row" style="justify-content:space-between"><span class="pill ${h(r.status)}">${h(STATUS[r.status]||r.status)}</span><span class="note">${h(fmtDT(r.createdAt))} Uhr</span></div>
     <h3>${h(catLabel(r.category))} · ${h(hallName(r.hall))}</h3>
     <p>${h(r.text).replace(/\n/g,'<br>')}</p>
     <div class="bigph">${(r.photos||[]).map((p,i)=>expired?`<div class="ph gone">Foto nach ${PHOTO_DAYS} Tagen gelöscht</div>`:`<img src="${h(store.photoUrl(p)||'')}" alt="Foto ${i+1}" loading="lazy">`).join('')}</div>
-    <div class="kv"><div>Gemeldet von</div><div>${h(r.name)}, ${h(clubName(r.club))}</div><div>Laufende Belegung</div><div>${h(r.slot&&r.slot.current?clubName(r.slot.current):'keine laut Plan')}</div><div>Vorherige Belegung</div><div>${h(r.slot&&r.slot.previous?clubName(r.slot.previous):'keine laut Plan')}</div></div>
+    <div class="kv"><div>Gemeldet von</div><div>${h(r.name)}, ${h(clubName(r.club))}</div>
+      <div>Beim Betreten</div><div>${h(r.onEntry?ENTRY[r.onEntry]:'keine Angabe')}</div>
+      <div>Laufende Belegung</div><div>${h(slotText(sl.current,true))}</div>
+      <div>Vorherige Belegung</div><div>${h(slotText(sl.previous,true))}</div></div>
+    <div class="win"><span class="label">Zeitfenster</span>${windowHtml(w)}${hint?`<span>${h(hint)}</span>`:''}</div>
     <section class="card"><p class="label" style="margin-bottom:6px">Zu informieren</p>${notify.map(n=>`<div class="contact"><div><div class="n">${h(n.name)}</div><div class="d">${h(n.detail||'Kontaktdaten fehlen')}</div></div></div>`).join('')||'<p class="note">Niemand zugeordnet.</p>'}
       <div class="row" style="margin-top:10px"><button class="btn sm" id="copy">Meldung als Text kopieren</button></div></section>
     <div class="field"><span class="label">Status setzen</span><div class="row">
@@ -609,22 +762,23 @@ function openDetail(id){
 }
 
 function editClub(id){
-  const c=cfg(), cl=id?c.clubs.find(x=>x.id===id):{id:'c_'+Date.now().toString(36),name:'',contact:'',phone:'',email:''};
-  const body=el(`<div class="field"><label for="e-name">Verein</label><input type="text" id="e-name" value="${h(cl.name)}" placeholder="z. B. TV Musterstadt"></div>
+  const c=cfg(), cl=id?c.clubs.find(x=>x.id===id):{id:'c_'+Date.now().toString(36),kind:'verein',name:'',contact:'',phone:'',email:''};
+  const body=el(`<div class="grid2"><div class="field"><label for="e-kind">Art</label><select id="e-kind"><option value="verein"${!isSchool(cl)?' selected':''}>Verein</option><option value="schule"${isSchool(cl)?' selected':''}>Schule</option></select></div>
+    <div class="field"><label for="e-name">Name</label><input type="text" id="e-name" value="${h(cl.name)}" placeholder="z. B. TV Musterstadt"></div></div>
     <div class="field"><label for="e-contact">Ansprechpartner</label><input type="text" id="e-contact" value="${h(cl.contact)}" placeholder="Vor- und Nachname"></div>
     <div class="grid2"><div class="field"><label for="e-phone">Telefon</label><input type="tel" id="e-phone" value="${h(cl.phone)}"></div><div class="field"><label for="e-email">E-Mail</label><input type="email" id="e-email" value="${h(cl.email)}"></div></div>
     <div class="row"><button class="btn primary" id="save">Speichern</button>${id?'<button class="btn danger" id="del">Löschen</button>':''}</div>`);
-  openSheet(id?'Verein ändern':'Verein anlegen',body);
+  openSheet(id?'Eintrag ändern':'Verein oder Schule anlegen',body);
   body.querySelector('#save').addEventListener('click',async()=>{
-    const name=body.querySelector('#e-name').value.trim(); if(!name){toast('Vereinsname fehlt.');return;}
-    const c2=JSON.parse(JSON.stringify(c)); const n={id:cl.id,name,contact:body.querySelector('#e-contact').value.trim(),phone:body.querySelector('#e-phone').value.trim(),email:body.querySelector('#e-email').value.trim()};
+    const name=body.querySelector('#e-name').value.trim(); if(!name){toast('Name fehlt.');return;}
+    const c2=JSON.parse(JSON.stringify(c)); const n={id:cl.id,kind:body.querySelector('#e-kind').value,name,contact:body.querySelector('#e-contact').value.trim(),phone:body.querySelector('#e-phone').value.trim(),email:body.querySelector('#e-email').value.trim()};
     const i=c2.clubs.findIndex(x=>x.id===cl.id); if(i>=0) c2.clubs[i]=n; else c2.clubs.push(n);
     if(await store.saveConfig(c2)){ closeSheet(); toast('Gespeichert.'); }
   });
   const d=body.querySelector('#del'); if(d) d.addEventListener('click',async()=>{
     if(d.dataset.sure!=='1'){ d.dataset.sure='1'; d.textContent='Wirklich löschen?'; return; }
     const c2=JSON.parse(JSON.stringify(c)); c2.clubs=c2.clubs.filter(x=>x.id!==cl.id); c2.schedule=c2.schedule.filter(s=>s.club!==cl.id);
-    if(await store.saveConfig(c2)){ closeSheet(); toast('Verein gelöscht.'); }
+    if(await store.saveConfig(c2)){ closeSheet(); toast('Eintrag gelöscht.'); }
   });
 }
 function editSchool(k){
@@ -640,18 +794,25 @@ function editSchool(k){
 }
 function addSlot(){
   const c=cfg();
-  if(!c.clubs.length){ toast('Zuerst einen Verein unter „Kontakte“ anlegen.'); return; }
+  if(!c.clubs.length){ toast('Zuerst einen Verein oder eine Schule unter „Kontakte“ anlegen.'); return; }
   const body=el(`<div class="grid2"><div class="field"><label for="s-hall">Halle</label><select id="s-hall">${HALLS.map(x=>`<option value="${x.id}">${h(x.name)}</option>`).join('')}</select></div>
-    <div class="field"><label for="s-wd">Wochentag</label><select id="s-wd">${[1,2,3,4,5,6,0].map(d=>`<option value="${d}">${WD[d]}</option>`).join('')}</select></div></div>
+    <div class="field"><label for="s-wd">Wochentag</label><select id="s-wd">${[1,2,3,4,5,6,0].map(d=>`<option value="${d}"${d===S.planDay?' selected':''}>${WD[d]}</option>`).join('')}</select></div></div>
     <div class="grid2"><div class="field"><label for="s-from">Von</label><input type="time" id="s-from" value="17:00"></div><div class="field"><label for="s-to">Bis</label><input type="time" id="s-to" value="18:30"></div></div>
-    <div class="field"><label for="s-club">Verein</label><select id="s-club">${clubOptions('')}</select></div>
+    <div class="field"><label for="s-club">Verein / Schule</label><select id="s-club">${clubOptions('')}</select></div>
+    <div class="field"><label for="s-part">Hallenteil (optional)</label><input type="text" id="s-part" placeholder="z. B. Teil 1+2, leer = ganze Halle"></div>
+    <div class="grid2"><div class="field"><label for="s-vf">Gültig ab (optional)</label><input type="date" id="s-vf"></div><div class="field"><label for="s-vt">Gültig bis (optional)</label><input type="date" id="s-vt"></div></div>
     <div class="row"><button class="btn primary" id="save">Zeit anlegen</button></div>`);
   openSheet('Belegungszeit anlegen',body);
   body.querySelector('#save').addEventListener('click',async()=>{
     const from=body.querySelector('#s-from').value, to=body.querySelector('#s-to').value;
     if(!from||!to||hm(from)>=hm(to)){ toast('Bitte gültige Zeit von/bis angeben.'); return; }
-    const c2=JSON.parse(JSON.stringify(c));
-    c2.schedule.push({hall:body.querySelector('#s-hall').value,wd:Number(body.querySelector('#s-wd').value),from,to,club:body.querySelector('#s-club').value});
+    const vf=body.querySelector('#s-vf').value, vt=body.querySelector('#s-vt').value;
+    if(vf&&vt&&vf>vt){ toast('„Gültig ab“ liegt nach „Gültig bis“.'); return; }
+    const row={hall:body.querySelector('#s-hall').value,wd:Number(body.querySelector('#s-wd').value),from,to,club:body.querySelector('#s-club').value};
+    const part=body.querySelector('#s-part').value.trim(); if(part) row.part=part;
+    if(vf) row.validFrom=vf; if(vt) row.validTo=vt;
+    const c2=JSON.parse(JSON.stringify(c)); c2.schedule.push(row);
+    S.planDay=row.wd;
     if(await store.saveConfig(c2)){ closeSheet(); toast('Zeit angelegt.'); }
   });
 }
@@ -682,7 +843,7 @@ function renderFeedback(){
   });
   html+=`<div class="field"><label for="fb-text">Was fehlt, was stört, was ist gut?</label><textarea id="fb-text" placeholder="Zum Beispiel: Die Fotofunktion habe ich erst beim zweiten Mal gefunden.">${h(d.text)}</textarea></div>
     <div class="row"><button class="btn primary" id="fb-send">Feedback senden</button><button class="btn" id="fb-copy">Text kopieren</button></div>
-    <p class="note">Dein Name und Verein werden aus deiner letzten Meldung übernommen${S.me.name?` (${h(S.me.name)})`:''}. Ohne Eintrag geht das Feedback anonym raus.</p></section>`;
+    <p class="note">Dein Name und Verein oder Schule werden aus deiner letzten Meldung übernommen${S.me.name?` (${h(S.me.name)})`:''}. Ohne Eintrag geht das Feedback anonym raus.</p></section>`;
   if(d.sent.length) html+=`<p class="note">Zuletzt gesendet: ${h(fmtDT(d.sent[d.sent.length-1]))}. Danke!</p>`;
   $('feedback').innerHTML=html;
   $('feedback').querySelectorAll('.rate').forEach(r=>r.addEventListener('click',e=>{
